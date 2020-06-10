@@ -17,7 +17,7 @@ stages:
   - build-tools
   - build-pipeline
   - push-tags
-  - test
+  - deploy
   
 include:
   - template: Container-Scanning.gitlab-ci.yml
@@ -103,5 +103,21 @@ push-tags:
     #  curl --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
     #   --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
     #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
+
+run-terraform:
+  image:
+    name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe:latest
+  only:
+    - /^tf-.*$/
+  stage: deploy
+  when: manual
+  environment:
+    name: terraform/$CI_COMMIT_REF_NAME
+  script:
+    - cd examples/terraform-sample-s3-bucket
+    - runTerraformByComment
+  artifacts:
+    paths:
+      - out.tfplan
 
 
