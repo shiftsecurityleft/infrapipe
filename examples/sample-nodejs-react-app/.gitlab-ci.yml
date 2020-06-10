@@ -1,0 +1,34 @@
+image:
+  name: registry.gitlab.com/shiftsecurityleft/pipeline/docker-pipeline:v2.0
+
+before_script:
+  - whoami
+  - pwd
+  - terraform --version
+
+stages:
+  - deploy
+
+run_terraform:
+  only:
+    - /^tf-.*$/
+  stage: deploy
+  script:
+    - runTerraformByComment
+  environment:
+    name: terraform/$CI_COMMIT_REF_NAME
+    on_stop: destroy_terraform
+
+destroy_terraform:
+  only:
+    - /^tf-.*$/
+  stage: deploy
+  script:
+    - export REMINDER=${REPO_BRANCH#*-}  # remove "tf-"
+    - export AWSENV=${REMINDER%%-*}
+    - doTerraform destroy
+  when: manual
+  environment:
+    name: terraform/$CI_COMMIT_REF_NAME
+    action: stop
+
