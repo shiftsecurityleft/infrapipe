@@ -9,6 +9,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
 
 before_script:
+  - cd pipeline-image
   - docker --version
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
