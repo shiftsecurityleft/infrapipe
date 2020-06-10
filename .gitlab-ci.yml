@@ -100,8 +100,8 @@ push-tags:
     # In near future Gitlab release-cli will be used here.
     #- echo "Release -- https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases"
     #- |
-      curl --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
-       --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
-       --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
+    #  curl --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
+    #   --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
+    #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
 
 
