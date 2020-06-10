@@ -16,6 +16,7 @@ stages:
   - build-base
   - build-tools
   - build-pipeline
+  - test
   - push-tags
   - deploy
   
