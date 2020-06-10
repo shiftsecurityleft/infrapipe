@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://bitbucket.org/extremevalue/demo-nodejs.git"
+    "url": "git+https://bitbucket.org/shiftsecurityleft/demo-nodejs.git"
   },
   "keywords": [
     "react",

@@ -7,7 +7,7 @@ locals {
 }
 
 module "vpc" {
-  source = "git::https://bitbucket.org/extremevalue/terraform-modules.git//vpc?ref=v2.0"
+  source = "git::https://bitbucket.org/shiftsecurityleft/terraform-modules.git//vpc?ref=v2.0"
 
   VPC_NAME = "${var.FAMILY}"
   VPC_CIDR = "10.1.0.0/16"
@@ -16,7 +16,7 @@ module "vpc" {
 }
 
 module "iam_role_demo" {
-  source = "git::https://bitbucket.org/extremevalue/terraform-modules.git//iam/iam-apps/iam-ecs?ref=v2.0"
+  source = "git::https://bitbucket.org/shiftsecurityleft/terraform-modules.git//iam/iam-apps/iam-ecs?ref=v2.0"
 
   APP_FAMILY = "${var.FAMILY}"
   APP_PREFIX = "demo-nodejs"
@@ -25,7 +25,7 @@ module "iam_role_demo" {
 }
 
 module "lb-ext" {
-  source = "git::https://bitbucket.org/extremevalue/terraform-modules.git//alb?ref=v2.0"
+  source = "git::https://bitbucket.org/shiftsecurityleft/terraform-modules.git//alb?ref=v2.0"
 
   LB_NAME  = "${var.FAMILY}-ext"
   DOMAIN   = "aws.shiftsecurityleft.cloud"

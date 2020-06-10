@@ -55,7 +55,7 @@ build-base:
   extends: .build-docker
   only:
     changes:
-      - pipeline-image/base.Dockerfile
+      - base.Dockerfile
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: "/base"
@@ -66,8 +66,8 @@ build-tools:
   extends: .build-docker
   only:
     changes:
-      - pipeline-image/base.Dockerfile
-      - pipeline-image/tools.Dockerfile
+      - base.Dockerfile
+      - tools.Dockerfile
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: "/tools"
@@ -78,10 +78,10 @@ build-pipeline:
   extends: .build-docker
   only:
     changes:
-      - pipeline-image/base.Dockerfile  
-      - pipeline-image/tools.Dockerfile
-      - pipeline-image/Dockerfile
-      - pipeline-image/bin/pipeline-library.sh
+      - base.Dockerfile  
+      - tools.Dockerfile
+      - Dockerfile
+      - bin/pipeline-library.sh
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: ""
