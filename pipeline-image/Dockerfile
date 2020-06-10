@@ -11,7 +11,7 @@ RUN echo '[ -f /opt/gitlab/cicd/agent/build/pipeline-override.sh ] && source /op
 #RUN cat $HOME/.bashrc >> temp && mv temp $HOME/.bashrc
 RUN mv temp $HOME/.profile
 
-# This is needed so that it will execute .bashrc at the beginning of Gitlab CI scripts
+# test This is needed so that it will execute .bashrc at the beginning of Gitlab CI scripts
 SHELL ["/bin/bash", "-c", "-l"]
 
 WORKDIR /opt/gitlab/cicd/agent/build
