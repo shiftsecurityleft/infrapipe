@@ -9,6 +9,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
 
 before_script:
+  # The next line is necessary in order for .gitlab-ci.yml to exists outside of pipeline-image dir.
   - cd pipeline-image
   - docker --version
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
