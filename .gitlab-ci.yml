@@ -83,7 +83,7 @@ build-pipeline:
       - pipeline-image/base.Dockerfile  
       - pipeline-image/tools.Dockerfile
       - pipeline-image/Dockerfile
-      - pipeline-image/bin/pipeline-library.sh
+      - pipeline-image/bin/*
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: ""
