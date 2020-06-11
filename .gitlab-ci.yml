@@ -107,7 +107,7 @@ push-tags:
 
 deploy:
   image:
-    name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe:latest
+    name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
   only:
     - /^tf-.*$/
   stage: deploy
