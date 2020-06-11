@@ -10,7 +10,7 @@ ENV NODE_VERSION 8.17.0 \
 		NODE10_VERSION 10.21.0 \
     NVM_VERSION 0.35.3 \
 		YARN_VERSION=1.22.4 \
-		PYTHON_VERSION 3.7.7 \
+		PYTHON_VERSION 3.8 \
 		PYTHON_PIP_VERSION 19.2.3 \
 		TF_VER 0.12.26 \
 		SNYK_CLI_VER=v1.236.1 \
@@ -76,36 +76,38 @@ RUN set -ex \
 
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
 
-RUN set -ex \
-	\
-	&& wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz" \
-	&& wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc" \
-	&& mkdir -p /usr/src/python \
-	&& tar -xJC /usr/src/python --strip-components=1 -f python.tar.xz \
-	&& rm python.tar.xz \
-	\
-	&& cd /usr/src/python \
-	&& gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
-	&& ./configure \
-		--build="$gnuArch" \
-		--enable-loadable-sqlite-extensions \
-		--enable-shared \
-		--with-system-expat \
-		--with-system-ffi \
-		--without-ensurepip \
-	&& make -j "$(nproc)" \
-	&& make install \
-	&& ldconfig \
-	\
-	&& find /usr/local -depth \
-		\( \
-			\( -type d -a \( -name test -o -name tests \) \) \
-			-o \
-			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
-		\) -exec rm -rf '{}' + \
-	&& rm -rf /usr/src/python \
-	\
-	&& python3 --version
+RUN apt-get install -y python${PYTHON_VERSION}
+
+# RUN set -ex \
+# 	\
+# 	&& wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz" \
+# 	&& wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc" \
+# 	&& mkdir -p /usr/src/python \
+# 	&& tar -xJC /usr/src/python --strip-components=1 -f python.tar.xz \
+# 	&& rm python.tar.xz \
+# 	\
+# 	&& cd /usr/src/python \
+# 	&& gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
+# 	&& ./configure \
+# 		--build="$gnuArch" \
+# 		--enable-loadable-sqlite-extensions \
+# 		--enable-shared \
+# 		--with-system-expat \
+# 		--with-system-ffi \
+# 		--without-ensurepip \
+# 	&& make -j "$(nproc)" \
+# 	&& make install \
+# 	&& ldconfig \
+# 	\
+# 	&& find /usr/local -depth \
+# 		\( \
+# 			\( -type d -a \( -name test -o -name tests \) \) \
+# 			-o \
+# 			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
+# 		\) -exec rm -rf '{}' + \
+# 	&& rm -rf /usr/src/python \
+# 	\
+# 	&& python3 --version
 
 # make some useful symlinks that are expected to exist
 RUN cd /usr/local/bin \
