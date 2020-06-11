@@ -156,7 +156,7 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 		&& rm -f awscliv2.zip \
 		&& rm -rf aws
 
-RUN python3 -m pip3 install --no-cache-dir docker-compose yq pipenv 
+RUN python3 -m pip install --no-cache-dir docker-compose yq pipenv 
 
 RUN pip install --no-cache-dir c7n
 
