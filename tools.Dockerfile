@@ -17,16 +17,17 @@ ENV NODE_VERSION=8.17.0 \
 		YQC_VER=2.4.0 \
 		SONARSCANNER_VER=3.4.0.1729-linux
 
-RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /root/.profile
-RUN echo '[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"' >> /root/.profile
+ENV NVM_DIR=/root/.nvm
 
 # Install nvm with node and npm
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash \
-    && export NVM_DIR=/root/.nvm \
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
-    && nvm use default
+    && nvm use default \
+		&& echo 'export NVM_DIR="$HOME/.nvm"' >> /root/.profile \
+		&& echo '[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"' >> /root/.profile
+
 
 # Set node path
 ENV NODE_PATH=$NVM_DIR/v$NODE_VERSION/lib/node_modules
