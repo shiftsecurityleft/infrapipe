@@ -116,7 +116,11 @@ RUN cd /usr/local/bin \
 	&& ln -s python3 python \
 	&& ln -s python3-config python-config
 
-RUN python3 -m pip3 install -U pip
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+
+RUN python3 get-pip.py
+
+#RUN python3 -m pip3 install -U pip
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
 
