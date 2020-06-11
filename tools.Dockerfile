@@ -22,7 +22,7 @@ RUN echo '[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"' >> /root/.profil
 
 # Install nvm with node and npm
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash \
-    && export NVM_DIR=/root/.nvm
+    && export NVM_DIR=/root/.nvm \
     && . $NVM_DIR/nvm.sh \
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
