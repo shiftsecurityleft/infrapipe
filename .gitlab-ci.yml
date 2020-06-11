@@ -109,20 +109,27 @@ push-tags:
     #   --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
     #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
 
-deploy:
-  image:
-    name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
-  only:
-    - /^tf-.*$/
-  stage: build-base
-  when: manual
-  environment:
-    name: terraform/$CI_COMMIT_REF_NAME
+test-image:
+  image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA
+    #name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
+  stage: test
   script:
-    - cd examples/terraform-sample-s3-bucket
-    - runTerraformByComment
-  artifacts:
-    paths:
-      - out.tfplan
+    - |
+      nvm --version
+      npm --version
+      node --version
+      nvm current
+      yarn --version
+      python --version
+      python3 --version
+      pip --version
+      pip3 --version
+      pipenv --version
+      java -version
+      mvn -version
+      snyk --version
+      sonar-scanner --version
+      terraform --version
+      aws --version
 
 
