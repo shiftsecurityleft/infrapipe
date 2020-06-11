@@ -150,7 +150,13 @@ RUN set -ex \
 # 	rm -f get-pip.py
 
 # Install AWS cli.  JQ is preinstalled
-RUN pip3 install --no-cache-dir awscli docker-compose yq pipenv
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+		&& unzip awscliv2.zip \
+		&& ./aws/install \
+		&& rm -f awscliv2.zip \
+		&& rm -rf aws
+
+RUN python3 -m pip3 install --no-cache-dir docker-compose yq pipenv 
 
 RUN pip install --no-cache-dir c7n
 
