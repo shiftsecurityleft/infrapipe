@@ -23,7 +23,6 @@ stages:
   - build-pipeline
   - test
   - push-tags
-  - deploy
   
 include:
   - template: Container-Scanning.gitlab-ci.yml
@@ -115,7 +114,7 @@ deploy:
     name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
   only:
     - /^tf-.*$/
-  stage: deploy
+  stage: build-base
   when: manual
   environment:
     name: terraform/$CI_COMMIT_REF_NAME
