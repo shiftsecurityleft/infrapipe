@@ -76,7 +76,9 @@ RUN set -ex \
 
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
 
-RUN apt-get install -y python${PYTHON_VERSION}
+# Install python3 and pip
+RUN apt-get install -y python${PYTHON_VERSION} \
+		python3-pip
 
 # RUN set -ex \
 # 	\
@@ -110,15 +112,15 @@ RUN apt-get install -y python${PYTHON_VERSION}
 # 	&& python3 --version
 
 # make some useful symlinks that are expected to exist
-RUN cd /usr/local/bin \
-	&& ln -s idle3 idle \
-	&& ln -s pydoc3 pydoc \
-	&& ln -s python3 python \
-	&& ln -s python3-config python-config
+# RUN cd /usr/local/bin \
+# 	&& ln -s idle3 idle \
+# 	&& ln -s pydoc3 pydoc \
+# 	&& ln -s python3 python \
+# 	&& ln -s python3-config python-config
 
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+# RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 
-RUN python3 get-pip.py
+# RUN python3 get-pip.py
 
 #RUN python3 -m pip3 install -U pip
 
