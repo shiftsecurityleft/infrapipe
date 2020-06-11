@@ -6,7 +6,6 @@ LABEL author="seongyong.kim@shiftsecurityleft.io"
 ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Install nvm with node and npm
 ENV NODE_VERSION 8.17.0 \
 		NODE10_VERSION 10.21.0 \
     NVM_VERSION 0.35.3 \
@@ -21,7 +20,8 @@ ENV NODE_VERSION 8.17.0 \
 ENV NVM_DIR=/root/.nvm \
 		PATH=$NVM_DIR:$PATH
 
-RUN curl https://raw.githubusercontent.com/creationix/nvm/v$NVM_VERSION/install.sh | bash \
+# Install nvm with node and npm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
