@@ -115,21 +115,36 @@ test-image:
   stage: test
   script:
     - |
-      nvm --version
-      npm --version
-      node --version
-      nvm current
-      yarn --version
-      python --version
-      python3 --version
-      pip --version
-      pip3 --version
-      pipenv --version
-      java -version
-      mvn -version
-      snyk --version
-      sonar-scanner --version
-      terraform --version
-      aws --version
+      [ -x "$(command -v nvm)" ] && nvm --version
+    - |
+      [ -x "$(command -v nvm)" ] && nvm current
+    - |
+      [ -x "$(command -v npm)" ] && npm --version
+    - |
+      [ -x "$(command -v node)" ] && node --version
+    - |
+      [ -x "$(command -v yarn)" ] && yarn --version
+    - |
+      [ -x "$(command -v python)" ] && python --version
+    - |
+      [ -x "$(command -v python3)" ] && python3 --version
+    - |
+      [ -x "$(command -v pip)" ] && pip --version
+    - |
+      [ -x "$(command -v pip3)" ] && pip3 --version
+    - |
+      [ -x "$(command -v pipenv)" ] && pipenv --version
+    - |
+      [ -x "$(command -v java)" ] && java -version
+    - |
+      [ -x "$(command -v mvn)" ] && mvn -version
+    - |
+      [ -x "$(command -v snyk)" ] && snyk --version
+    - |
+      [ -x "$(command -v sonar-scanner)" ] && sonar-scanner --version
+    - |
+      [ -x "$(command -v terraform)" ] && terraform --version
+    - |
+      [ -x "$(command -v aws)" ] && aws --version
 
 
