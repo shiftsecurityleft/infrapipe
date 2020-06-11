@@ -1,0 +1,32 @@
+# README #
+
+This is the default docker image used as a default build environment in ShiftSecurityLeft's Gitlab Pipelines.
+
+## Pipeline Build Status
+
+* master: [![pipeline status](https://gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo/badges/master/pipeline.svg)](https://gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo/commits/master)
+
+### What is this repository for? ###
+
+* Quick summary
+* Version
+
+### How do I get set up? ###
+
+* Summary of set up
+* Configuration
+* Dependencies
+* Database configuration
+* How to run tests
+* Deployment instructions
+
+### Contribution guidelines ###
+
+* Writing tests
+* Code review
+* Other guidelines
+
+### Who do I talk to? ###
+
+* Repo owner or admin
+* Other community or team contact
