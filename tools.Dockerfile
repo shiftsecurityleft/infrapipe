@@ -6,13 +6,13 @@ LABEL author="seongyong.kim@shiftsecurityleft.io"
 ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ENV NODE_VERSION 8.17.0 \
-		NODE10_VERSION 10.21.0 \
-    NVM_VERSION 0.35.3 \
+ENV NODE_VERSION=8.17.0 \
+		NODE10_VERSION=10.21.0 \
+    NVM_VERSION=0.35.3 \
 		YARN_VERSION=1.22.4 \
-		PYTHON_VERSION 3.8 \
-		PYTHON_PIP_VERSION 19.2.3 \
-		TF_VER 0.12.26 \
+		PYTHON_VERSION=3.8 \
+		PYTHON_PIP_VERSION=19.2.3 \
+		TF_VER=0.12.26 \
 		SNYK_CLI_VER=v1.236.1 \
 		YQC_VER=2.4.0 \
 		SONARSCANNER_VER=3.4.0.1729-linux
