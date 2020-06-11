@@ -9,8 +9,6 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
 
 before_script:
-  # The next line is necessary in order for .gitlab-ci.yml to exists outside of pipeline-image dir.
-  - cd pipeline-image
   - docker --version
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
@@ -18,8 +16,9 @@ stages:
   - build-base
   - build-tools
   - build-pipeline
-  - push-tags
   - test
+  - push-tags
+  - deploy
   
 include:
   - template: Container-Scanning.gitlab-ci.yml
@@ -57,7 +56,7 @@ build-base:
   extends: .build-docker
   only:
     changes:
-      - pipeline-image/base.Dockerfile
+      - base.Dockerfile
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: "/base"
@@ -68,8 +67,8 @@ build-tools:
   extends: .build-docker
   only:
     changes:
-      - pipeline-image/base.Dockerfile
-      - pipeline-image/tools.Dockerfile
+      - base.Dockerfile
+      - tools.Dockerfile
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: "/tools"
@@ -80,10 +79,10 @@ build-pipeline:
   extends: .build-docker
   only:
     changes:
-      - pipeline-image/base.Dockerfile  
-      - pipeline-image/tools.Dockerfile
-      - pipeline-image/Dockerfile
-      - pipeline-image/bin/*
+      - base.Dockerfile  
+      - tools.Dockerfile
+      - Dockerfile
+      - bin/*
       - .gitlab-ci.yml
   variables:
     SUB_IMAGE: ""
@@ -99,10 +98,27 @@ push-tags:
     - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - apk add curl
-    - echo "Release -- https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases"
-    - |
-      curl --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
-       --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
-       --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
+    # In near future Gitlab release-cli will be used here.
+    #- echo "Release -- https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases"
+    #- |
+    #  curl --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
+    #   --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
+    #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
+
+deploy:
+  image:
+    name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe:latest
+  only:
+    - /^tf-.*$/
+  stage: deploy
+  when: manual
+  environment:
+    name: terraform/$CI_COMMIT_REF_NAME
+  script:
+    - cd examples/terraform-sample-s3-bucket
+    - runTerraformByComment
+  artifacts:
+    paths:
+      - out.tfplan
 
 
