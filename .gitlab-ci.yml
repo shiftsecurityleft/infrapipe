@@ -114,6 +114,7 @@ test-image:
     #name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
   stage: test
   script:
+    - cat $HOME/.profile
     - |
       [ -x "$(command -v nvm)" ] && nvm --version
     - |
