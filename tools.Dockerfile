@@ -77,8 +77,12 @@ RUN set -ex \
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
 
 # Install python3 and pip
-RUN apt-get install -y python${PYTHON_VERSION} \
-		python3-pip
+RUN set -ex \
+    && apt-get update \
+    && apt-get install -y \
+			python${PYTHON_VERSION} \
+			python3-pip \
+		&& rm -rf /var/lib/apt/lists/*
 
 # RUN set -ex \
 # 	\
