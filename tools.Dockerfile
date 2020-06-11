@@ -7,10 +7,18 @@ ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install nvm with node and npm
-ENV NODE_VERSION=8.16.2 \
-		NODE10_VERSION=10.17.0 \
-    NVM_DIR=/root/.nvm \
-    NVM_VERSION=0.35.0 \
+ENV NODE_VERSION 8.17.0 \
+		NODE10_VERSION 10.21.0 \
+    NVM_VERSION 0.35.3 \
+		YARN_VERSION=1.22.4 \
+		PYTHON_VERSION 3.7.7 \
+		PYTHON_PIP_VERSION 19.2.3 \
+		TF_VER 0.12.26 \
+		SNYK_CLI_VER=v1.236.1 \
+		YQC_VER=2.4.0 \
+		SONARSCANNER_VER=3.4.0.1729-linux
+
+ENV NVM_DIR=/root/.nvm \
 		PATH=$NVM_DIR:$PATH
 
 RUN curl https://raw.githubusercontent.com/creationix/nvm/v$NVM_VERSION/install.sh | bash \
@@ -67,7 +75,6 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.7.5
 
 RUN set -ex \
 	\
@@ -108,7 +115,6 @@ RUN cd /usr/local/bin \
 	&& ln -s python3-config python-config
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 19.2.3
 
 RUN set -ex; \
 	\
@@ -135,7 +141,6 @@ RUN pip3 install --no-cache-dir awscli docker-compose yq pipenv
 RUN pip install --no-cache-dir c7n
 
 # Install terraform
-ENV TF_VER=0.12.16
 RUN set -ex \
     && curl -o terraform.zip -sSL https://releases.hashicorp.com/terraform/${TF_VER}/terraform_${TF_VER}_linux_amd64.zip \
     && unzip -o terraform.zip             \
@@ -144,7 +149,6 @@ RUN set -ex \
     && rm -f terraform.zip
 
 # Install YARN.  NVM and NPM and Node are already installed
-ENV YARN_VERSION=1.19.1
 RUN set -ex \
     && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
     && mkdir -p /opt \
@@ -163,19 +167,16 @@ ENV NODE_PATH=$NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 # Install Snyk CLI
-ENV SNYK_CLI_VER=v1.236.1
 RUN set -ex \
     && curl -o /usr/local/bin/snyk -sSL https://github.com/snyk/snyk/releases/download/${SNYK_CLI_VER}/snyk-linux \
     && chmod a+x /usr/local/bin/snyk
 
 # Install mikefarah yq and rename it yqc
-ENV YQC_VER=2.4.0
 RUN set -ex \
     && curl -o /usr/local/bin/yqc -sSL https://github.com/mikefarah/yq/releases/download/${YQC_VER}/yq_linux_amd64 \
     && chmod a+x /usr/local/bin/yqc
 
 # Install sonarscanner
-ENV SONARSCANNER_VER=3.4.0.1729-linux
 RUN set -ex \
     && curl -o sonar-scanner-cli.zip -sSL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONARSCANNER_VER}.zip \
     && unzip -o sonar-scanner-cli.zip \
