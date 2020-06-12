@@ -112,6 +112,8 @@ push-tags:
 test-image:
   image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA
     #name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
+  except:
+    - tags
   stage: test
   script:
     - cat $HOME/.profile
