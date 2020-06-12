@@ -9,8 +9,13 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
 
 before_script:
-  - docker --version
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - |
+    if [ "$(command -v docker)" ]; then  
+      docker --version
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    fi
+  - |
+    [ "$(command -v terraform)" ] && terraform --version
 
 stages:
   - build-base
@@ -18,7 +23,6 @@ stages:
   - build-pipeline
   - test
   - push-tags
-  - deploy
   
 include:
   - template: Container-Scanning.gitlab-ci.yml
@@ -105,20 +109,43 @@ push-tags:
     #   --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
     #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
 
-deploy:
-  image:
-    name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe:latest
-  only:
-    - /^tf-.*$/
-  stage: deploy
-  when: manual
-  environment:
-    name: terraform/$CI_COMMIT_REF_NAME
+test-image:
+  image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA
+    #name: registry.gitlab.com/shiftsecurityleft/infrapipe/infrapipe-demo:v0.1
+  stage: test
   script:
-    - cd examples/terraform-sample-s3-bucket
-    - runTerraformByComment
-  artifacts:
-    paths:
-      - out.tfplan
+    - cat $HOME/.profile
+    - |
+      [ "$(command -v nvm)" ] && nvm --version
+    - |
+      [ "$(command -v nvm)" ] && nvm current
+    - |
+      [ "$(command -v npm)" ] && npm --version
+    - |
+      [ "$(command -v node)" ] && node --version
+    - |
+      [ "$(command -v yarn)" ] && yarn --version
+    - |
+      [ "$(command -v python)" ] && python --version
+    - |
+      [ "$(command -v python3)" ] && python3 --version
+    - |
+      [ "$(command -v pip)" ] && pip --version
+    - |
+      [ "$(command -v pip3)" ] && pip3 --version
+    - |
+      [ "$(command -v pipenv)" ] && pipenv --version
+    - |
+      [ "$(command -v java)" ] && java -version
+    - |
+      [ "$(command -v mvn)" ] && mvn -version
+    - |
+      [ "$(command -v snyk)" ] && snyk --version
+    - |
+      [ "$(command -v sonar-scanner)" ] && sonar-scanner --version
+    - |
+      [ "$(command -v terraform)" ] && terraform --version
+    - |
+      [ "$(command -v aws)" ] && aws --version
 
 

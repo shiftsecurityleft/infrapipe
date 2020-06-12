@@ -1,6 +1,6 @@
 resource "random_pet" "common" {
   length    = 2
-  separator = var.TESTSEP
+  separator = ""
 }
 
 module "encrypted-s3" {
