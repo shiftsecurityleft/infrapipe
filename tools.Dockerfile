@@ -25,7 +25,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/instal
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
     && nvm use default \
-		&& echo 'export NVM_DIR="$HOME/.nvm"' >> /root/.profile \
+		&& echo 'export NVM_DIR="/root/.nvm"' >> /root/.profile \
 		&& echo '[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"' >> /root/.profile
 
 
