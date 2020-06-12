@@ -17,7 +17,9 @@ ENV NODE_VERSION=8.17.0 \
 		YQC_VER=2.4.0 \
 		SONARSCANNER_VER=3.4.0.1729-linux
 
-ENV NVM_DIR=/root/.nvm
+ENV NVM_DIR=/root/.nvm \
+		PATH=$NVM_DIR:$PATH
+
 
 # Install nvm with node and npm
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh | bash \
