@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create Minimal requirements for InfraPipe
+Parameters:
+  InfraPipeAwsAccountId:
+    Type: Number
+    Description: Please Enter AWS Account number.
+Resources:
+  InfraPipeAwsTerraformUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Path: /enterprise/
+      UserName: terraform
+  InfraPipeAwsPipelineAccountPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: InfraPipeAwsDevOps
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: '*'
+            Effect: Allow
+            Resource: '*'
+      Roles:
+        - !Ref InfraPipePipelineRole
+  InfraPipeTFPipelinePolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: Pipeline
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Resource:
+              - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/enterprise/Pipeline-*'
+              - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/bu/Pipeline-*'
+      Groups:
+        - !Ref InfraPipePipelineGroup
+  InfraPipePipelineGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      GroupName: Pipeline
+      Path: /enterprise/
+  InfraPipeAddUserToGroup:
+    Type: 'AWS::IAM::UserToGroupAddition'
+    Properties:
+      GroupName: !Ref InfraPipePipelineGroup
+      Users:
+        - terraform
+  InfraPipePipelineRole:
+    Type: 'AWS::IAM::Role'
+    DependsOn:
+      - InfraPipeAwsTerraformUser
+    Properties:
+      RoleName: Pipeline-InfraPipe
+      Path: /enterprise/
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:user/enterprise/terraform'
+            Action:
+              - 'sts:AssumeRole'
+  InfraPipeTFStateS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: tf-state-infrapipe
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+  InfraPipeSSMParamS3BucketName:
+    Type: 'AWS::SSM::Parameter'
+    DependsOn:
+      - InfraPipeTFStateS3Bucket
+    Properties:
+      Description: Name of the S3 bucket storing Terraform state
+      Name: TFStateS3BucketName
+      Type: String
+      Value: tf-state-infrapipe
+  InfraPipeSSMParamS3BucketKey:
+    Type: 'AWS::SSM::Parameter'
+    DependsOn:
+      - InfraPipeTFStateS3Bucket
+    Properties:
+      Description: Key of the S3 bucket storing Terraform state
+      Name: TFStateS3BucketKey
+      Type: String
+      Value: test
+  InfraPipeSSMParamPipelineRole:
+    Type: 'AWS::SSM::Parameter'
+    DependsOn:
+      - InfraPipePipelineRole
+    Properties:
+      Description: Name of Pipeline IAM Role
+      Name: PipelineRoleName
+      Type: String
+      Value: Pipeline-InfraPipe
