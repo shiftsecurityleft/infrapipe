@@ -88,7 +88,7 @@ Resources:
       Description: Key of the S3 bucket storing Terraform state
       Name: TFStateS3BucketKey
       Type: String
-      Value: test
+      Value: terraform.tfstate
   InfraPipeSSMParamPipelineRole:
     Type: 'AWS::SSM::Parameter'
     DependsOn:

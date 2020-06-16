@@ -11,10 +11,10 @@
 
 ## If multi-accounts setup , create the following for each account.
 5. IAM role for pipeline: must trust above IAM user
-6. Add IAM role name to SSM security/pipeline/<ENV>/AWS_ASSUME_ROLE_ARN
+6. Add IAM role ARN to SSM security/pipeline/<ENV>/AWS_ASSUME_ROLE_ARN
 6. S3 bucket for terraform state remote backend
 11. Add above S3 bucket name to SSM security/pipeline/<ENV>/AWS_TFSTATE_S3_BUCKET
-11. Add above S3 key to SSM security/pipeline/<ENV>/AWS_TFSTATE_S3_KEY
+11. Add above S3 key to SSM security/pipeline/<ENV>/AWS_TFSTATE_S3_KEY (hardcode terraform.tfstate)
 
 ## Setup pipeline variables at group level or repo level.
 ### Add the following variable to 
