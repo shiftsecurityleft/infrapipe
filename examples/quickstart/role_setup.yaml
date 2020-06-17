@@ -12,11 +12,11 @@ Parameters:
   InfraPipeIamPath:
     Type: String
     Default: /pipeline/
-    Description: Please enter the path for IAM roles and groups.
+    Description: Please enter the path for IAM roles and groups with beginning and ending with '/'.
   InfraPipeSsmPath:
     Type: String
-    Default: /pipeline
-    Description: Please enter the path for SSM parameters.
+    Default: security/pipeline
+    Description: Please enter the path for SSM parameters without beginning and ending '/'.
 Resources:
   InfraPipeIamUser:
     Type: 'AWS::IAM::User'
@@ -38,6 +38,18 @@ Resources:
     Metadata:
       'AWS::CloudFormation::Designer':
         id: a8c1c18d-119c-4c3c-96ef-90e10b5cb863
+  InfraPipeIamUserPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: InfraPipeIamUserPolicy-SSMReadonly
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: ssm:GetParameters
+            Effect: Allow
+            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${InfraPipeSSMParamPipelineRole}'
+      Users:
+        - !Ref InfraPipeIamUser
   InfraPipeIamRolePolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -120,7 +132,7 @@ Resources:
     Type: 'AWS::SSM::Parameter'
     Properties:
       Description: Name of the S3 bucket storing Terraform state
-      Name: !Sub '${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_BUCKET'
+      Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_BUCKET'
       Type: String
       Value: !Ref InfraPipeTfStateS3Bucket
     Metadata:
@@ -130,7 +142,7 @@ Resources:
     Type: 'AWS::SSM::Parameter'
     Properties:
       Description: Key of the S3 bucket storing Terraform state
-      Name: !Sub '${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_KEY'
+      Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_KEY'
       Type: String
       Value: terraform.tfstate
     Metadata:
@@ -140,7 +152,7 @@ Resources:
     Type: 'AWS::SSM::Parameter'
     Properties:
       Description: Name of Pipeline IAM Role
-      Name: !Sub '${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
+      Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
       Type: String
       Value: !GetAtt InfraPipeIamRole.Arn
     Metadata:
