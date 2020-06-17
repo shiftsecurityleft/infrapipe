@@ -3,33 +3,38 @@ Description: Create Minimal requirements for InfraPipe
 Parameters:
   InfraPipeEnv:
     Type: String
-    Default: 'DEV'
+    Default: 'dev'
     Description: Please enter the environment alias.
-  InfraPipeAwsAccountId:
+  InfraPipeIamPath:
     Type: String
-    Default: '084290633232'
-    Description: Please Enter AWS Account Id.
+    Default: /pipeline/
+    Description: Please enter the path for IAM roles and groups.
+  InfraPipeSsmPath:
+    Type: String
+    Default: /pipeline 
+    Description: Please enter the path for SSM parameters.
 Resources:
-  InfraPipeAwsTerraformUser:
+  InfraPipeIamUser:
     Type: 'AWS::IAM::User'
     Properties:
-      Path: /enterprise/
+      Path: 
+        Ref: InfraPipeIamPath
       UserName: terraform
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 9b913154-bcc1-40b1-9da8-58dc0fece666
-  InfraPipeAwsTerraformUserKeys:
+  InfraPipeIamUserKeys:
     Type: 'AWS::IAM::AccessKey'
     Properties:
       UserName:
-        Ref: InfraPipeAwsTerraformUser
+        Ref: InfraPipeIamUser
     Metadata:
       'AWS::CloudFormation::Designer':
         id: a8c1c18d-119c-4c3c-96ef-90e10b5cb863
-  InfraPipeAwsPipelineAccountPolicy:
+  InfraPipeIamRolePolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
-      PolicyName: InfraPipeAwsDevOps
+      PolicyName: InfraPipeIamRolePolicy-FullAdmin
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -37,64 +42,64 @@ Resources:
             Effect: Allow
             Resource: '*'
       Roles:
-        - !Ref InfraPipePipelineRole
+        - !Ref InfraPipeIamRole
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 02250530-c894-4efb-9dc9-837c9c9ea2dd
-  InfraPipeTFPipelinePolicy:
+  InfraPipeIamGroupPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
-      PolicyName: Pipeline
+      PolicyName: InfraPipeIamGroupPolicy-AssumePipelineRole
       PolicyDocument:
         Statement:
           - Effect: Allow
             Action:
               - 'sts:AssumeRole'
             Resource:
-              - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/enterprise/Pipeline-*'
+              - !GetAtt InfraPipeIamRole.Arn
       Groups:
-        - !Ref InfraPipePipelineGroup
+        - !Ref InfraPipeIamGroup
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 3e9b2f34-e3e2-4178-93a3-4ca3e0789d32
-  InfraPipePipelineGroup:
+  InfraPipeIamGroup:
     Type: 'AWS::IAM::Group'
     Properties:
       GroupName: Pipeline
-      Path: /enterprise/
+      Path:
+        Ref: InfraPipeIamPath
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 23dd57d5-5b07-4b38-8064-2d3103bf5913
   InfraPipeAddUserToGroup:
     Type: 'AWS::IAM::UserToGroupAddition'
     Properties:
-      GroupName: !Ref InfraPipePipelineGroup
+      GroupName: !Ref InfraPipeIamGroup
       Users:
         - terraform
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 9663123c-933a-485a-983e-7f9dd8029cf7
-  InfraPipePipelineRole:
+  InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
-    DependsOn:
-      - InfraPipeAwsTerraformUser
     Properties:
-      RoleName: Pipeline-InfraPipe
-      Path: /enterprise/
+      RoleName: Pipeline-ops
+      Path:
+        Ref: InfraPipeIamPath
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:user/enterprise/terraform'
+              AWS: !GetAtt InfraPipeIamUser.Arn
             Action:
               - 'sts:AssumeRole'
     Metadata:
       'AWS::CloudFormation::Designer':
         id: acda484e-7a0d-42e8-9ca2-b913ccf1db08
-  InfraPipeTFStateS3Bucket:
+  InfraPipeTfStateS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: tf-state-infrapipe
+      BucketName: !Sub 'tfstate-infrapipe-${InfraPipeEnv}-${AWS::AccountId}'
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -106,37 +111,31 @@ Resources:
         id: f83251e2-ac63-4d7a-a0d2-7e2236bea98f
   InfraPipeSSMParamS3BucketName:
     Type: 'AWS::SSM::Parameter'
-    DependsOn:
-      - InfraPipeTFStateS3Bucket
     Properties:
       Description: Name of the S3 bucket storing Terraform state
-      Name: TFStateS3BucketName
+      Name: !Sub '${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_BUCKET'
       Type: String
-      Value: tf-state-infrapipe
+      Value: !Ref InfraPipeTfStateS3Bucket
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 986b15a5-1c45-4536-a500-ef31e80ffe7b
   InfraPipeSSMParamS3BucketKey:
     Type: 'AWS::SSM::Parameter'
-    DependsOn:
-      - InfraPipeTFStateS3Bucket
     Properties:
       Description: Key of the S3 bucket storing Terraform state
-      Name: TFStateS3BucketKey
+      Name: !Sub '${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_KEY'
       Type: String
-      Value: test
+      Value: terraform.tfstate
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 23ca2be9-9bc8-4be2-bba9-fd53b6664c88
   InfraPipeSSMParamPipelineRole:
     Type: 'AWS::SSM::Parameter'
-    DependsOn:
-      - InfraPipePipelineRole
     Properties:
       Description: Name of Pipeline IAM Role
-      Name: !Sub '/security/pipeline/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
+      Name: !Sub '${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
       Type: String
-      Value: {"Fn::GetAtt" : ["InfraPipePipelineRole", "Arn"] }
+      Value: !GetAtt InfraPipeIamRole.Arn
     Metadata:
       'AWS::CloudFormation::Designer':
         id: b5cc5a7a-7da9-4074-88b3-dbd20e9118d0
