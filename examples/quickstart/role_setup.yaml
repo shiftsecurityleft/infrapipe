@@ -27,17 +27,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref InfraPipeIamUsername
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 9b913154-bcc1-40b1-9da8-58dc0fece666
-  InfraPipeIamUserKeys:
-    Type: 'AWS::IAM::AccessKey'
-    Properties:
-      UserName:
-        Ref: InfraPipeIamUser
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: a8c1c18d-119c-4c3c-96ef-90e10b5cb863
   InfraPipeIamUserPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -62,9 +51,6 @@ Resources:
             Resource: '*'
       Roles:
         - !Ref InfraPipeIamRole
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 02250530-c894-4efb-9dc9-837c9c9ea2dd
   InfraPipeIamGroupPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -76,29 +62,6 @@ Resources:
               - 'sts:AssumeRole'
             Resource:
               - !GetAtt InfraPipeIamRole.Arn
-      Groups:
-        - !Ref InfraPipeIamGroup
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 3e9b2f34-e3e2-4178-93a3-4ca3e0789d32
-  InfraPipeIamGroup:
-    Type: 'AWS::IAM::Group'
-    Properties:
-      GroupName: Pipeline
-      Path:
-        Ref: InfraPipeIamPath
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 23dd57d5-5b07-4b38-8064-2d3103bf5913
-  InfraPipeAddUserToGroup:
-    Type: 'AWS::IAM::UserToGroupAddition'
-    Properties:
-      GroupName: !Ref InfraPipeIamGroup
-      Users:
-        - !Ref InfraPipeIamUser
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 9663123c-933a-485a-983e-7f9dd8029cf7
   InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -112,9 +75,6 @@ Resources:
               AWS: !GetAtt InfraPipeIamUser.Arn
             Action:
               - 'sts:AssumeRole'
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: acda484e-7a0d-42e8-9ca2-b913ccf1db08
   InfraPipeTfStateS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -125,9 +85,11 @@ Resources:
               SSEAlgorithm: AES256
       VersioningConfiguration:
         Status: Enabled
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: f83251e2-ac63-4d7a-a0d2-7e2236bea98f
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
   InfraPipeSSMParamS3BucketName:
     Type: 'AWS::SSM::Parameter'
     Properties:
@@ -135,9 +97,6 @@ Resources:
       Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_BUCKET'
       Type: String
       Value: !Ref InfraPipeTfStateS3Bucket
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 986b15a5-1c45-4536-a500-ef31e80ffe7b
   InfraPipeSSMParamS3BucketKey:
     Type: 'AWS::SSM::Parameter'
     Properties:
@@ -145,9 +104,6 @@ Resources:
       Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_KEY'
       Type: String
       Value: terraform.tfstate
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 23ca2be9-9bc8-4be2-bba9-fd53b6664c88
   InfraPipeSSMParamPipelineRole:
     Type: 'AWS::SSM::Parameter'
     Properties:
@@ -155,116 +111,3 @@ Resources:
       Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
       Type: String
       Value: !GetAtt InfraPipeIamRole.Arn
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: b5cc5a7a-7da9-4074-88b3-dbd20e9118d0
-Metadata:
-  'AWS::CloudFormation::Designer':
-    f83251e2-ac63-4d7a-a0d2-7e2236bea98f:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 310
-        'y': 100
-      z: 1
-      embeds: []
-    23ca2be9-9bc8-4be2-bba9-fd53b6664c88:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 190
-        'y': 320
-      z: 1
-      embeds: []
-      dependson:
-        - f83251e2-ac63-4d7a-a0d2-7e2236bea98f
-    986b15a5-1c45-4536-a500-ef31e80ffe7b:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 190
-        'y': 100
-      z: 1
-      embeds: []
-    23dd57d5-5b07-4b38-8064-2d3103bf5913:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: -40
-        'y': 100
-      z: 1
-      embeds: []
-    9663123c-933a-485a-983e-7f9dd8029cf7:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: -40
-        'y': 220
-      z: 1
-      embeds: []
-      isassociatedwith:
-        - 23dd57d5-5b07-4b38-8064-2d3103bf5913
-        - 9b913154-bcc1-40b1-9da8-58dc0fece666
-    3e9b2f34-e3e2-4178-93a3-4ca3e0789d32:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 80
-        'y': 100
-      z: 1
-      embeds: []
-      isassociatedwith:
-        - 23dd57d5-5b07-4b38-8064-2d3103bf5913
-    9b913154-bcc1-40b1-9da8-58dc0fece666:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: -40
-        'y': 320
-      z: 1
-      embeds: []
-    acda484e-7a0d-42e8-9ca2-b913ccf1db08:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 80
-        'y': 220
-      z: 1
-      embeds: []
-    b5cc5a7a-7da9-4074-88b3-dbd20e9118d0:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 190
-        'y': 220
-      z: 1
-      embeds: []
-    02250530-c894-4efb-9dc9-837c9c9ea2dd:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 80
-        'y': 320
-      z: 1
-      embeds: []
-      isassociatedwith:
-        - acda484e-7a0d-42e8-9ca2-b913ccf1db08
-    a8c1c18d-119c-4c3c-96ef-90e10b5cb863:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: -150
-        'y': 320
-      z: 1
-      embeds: []
