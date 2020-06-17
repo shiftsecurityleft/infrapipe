@@ -1,0 +1,258 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create Minimal requirements for InfraPipe
+Parameters:
+  InfraPipeEnv:
+    Type: String
+    Default: 'DEV'
+    Description: Please enter the environment alias.
+  InfraPipeAwsAccountId:
+    Type: String
+    Default: '084290633232'
+    Description: Please Enter AWS Account Id.
+Resources:
+  InfraPipeAwsTerraformUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Path: /enterprise/
+      UserName: terraform
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 9b913154-bcc1-40b1-9da8-58dc0fece666
+  InfraPipeAwsTerraformUserKeys:
+    Type: 'AWS::IAM::AccessKey'
+    Properties:
+      UserName:
+        Ref: InfraPipeAwsTerraformUser
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a8c1c18d-119c-4c3c-96ef-90e10b5cb863
+  InfraPipeAwsPipelineAccountPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: InfraPipeAwsDevOps
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: '*'
+            Effect: Allow
+            Resource: '*'
+      Roles:
+        - !Ref InfraPipePipelineRole
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 02250530-c894-4efb-9dc9-837c9c9ea2dd
+  InfraPipeTFPipelinePolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: Pipeline
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Resource:
+              - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/enterprise/Pipeline-*'
+              - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/bu/Pipeline-*'
+      Groups:
+        - !Ref InfraPipePipelineGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3e9b2f34-e3e2-4178-93a3-4ca3e0789d32
+  InfraPipePipelineGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      GroupName: Pipeline
+      Path: /enterprise/
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 23dd57d5-5b07-4b38-8064-2d3103bf5913
+  InfraPipeAddUserToGroup:
+    Type: 'AWS::IAM::UserToGroupAddition'
+    Properties:
+      GroupName: !Ref InfraPipePipelineGroup
+      Users:
+        - terraform
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 9663123c-933a-485a-983e-7f9dd8029cf7
+  InfraPipePipelineRole:
+    Type: 'AWS::IAM::Role'
+    DependsOn:
+      - InfraPipeAwsTerraformUser
+    Properties:
+      RoleName: Pipeline-InfraPipe
+      Path: /enterprise/
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:user/enterprise/terraform'
+            Action:
+              - 'sts:AssumeRole'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: acda484e-7a0d-42e8-9ca2-b913ccf1db08
+  InfraPipeTFStateS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: tf-state-infrapipe
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: f83251e2-ac63-4d7a-a0d2-7e2236bea98f
+  InfraPipeSSMParamS3BucketName:
+    Type: 'AWS::SSM::Parameter'
+    DependsOn:
+      - InfraPipeTFStateS3Bucket
+    Properties:
+      Description: Name of the S3 bucket storing Terraform state
+      Name: TFStateS3BucketName
+      Type: String
+      Value: tf-state-infrapipe
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 986b15a5-1c45-4536-a500-ef31e80ffe7b
+  InfraPipeSSMParamS3BucketKey:
+    Type: 'AWS::SSM::Parameter'
+    DependsOn:
+      - InfraPipeTFStateS3Bucket
+    Properties:
+      Description: Key of the S3 bucket storing Terraform state
+      Name: TFStateS3BucketKey
+      Type: String
+      Value: test
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 23ca2be9-9bc8-4be2-bba9-fd53b6664c88
+  InfraPipeSSMParamPipelineRole:
+    Type: 'AWS::SSM::Parameter'
+    DependsOn:
+      - InfraPipePipelineRole
+    Properties:
+      Description: Name of Pipeline IAM Role
+      Name: !Sub '/security/pipeline/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
+      Type: String
+      Value: {"Fn::GetAtt" : ["InfraPipePipelineRole", "Arn"] }
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b5cc5a7a-7da9-4074-88b3-dbd20e9118d0
+Metadata:
+  'AWS::CloudFormation::Designer':
+    f83251e2-ac63-4d7a-a0d2-7e2236bea98f:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 60
+        'y': 90
+      z: 1
+      embeds: []
+    23ca2be9-9bc8-4be2-bba9-fd53b6664c88:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 90
+      z: 1
+      embeds: []
+      dependson:
+        - f83251e2-ac63-4d7a-a0d2-7e2236bea98f
+    986b15a5-1c45-4536-a500-ef31e80ffe7b:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 60
+        'y': 210
+      z: 1
+      embeds: []
+      dependson:
+        - f83251e2-ac63-4d7a-a0d2-7e2236bea98f
+    23dd57d5-5b07-4b38-8064-2d3103bf5913:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 210
+      z: 1
+      embeds: []
+    9663123c-933a-485a-983e-7f9dd8029cf7:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 300
+        'y': 90
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - 23dd57d5-5b07-4b38-8064-2d3103bf5913
+    3e9b2f34-e3e2-4178-93a3-4ca3e0789d32:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 300
+        'y': 210
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - 23dd57d5-5b07-4b38-8064-2d3103bf5913
+    9b913154-bcc1-40b1-9da8-58dc0fece666:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 60
+        'y': 330
+      z: 1
+      embeds: []
+    acda484e-7a0d-42e8-9ca2-b913ccf1db08:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 330
+      z: 1
+      embeds: []
+      dependson:
+        - 9b913154-bcc1-40b1-9da8-58dc0fece666
+    b5cc5a7a-7da9-4074-88b3-dbd20e9118d0:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 300
+        'y': 330
+      z: 1
+      embeds: []
+      dependson:
+        - acda484e-7a0d-42e8-9ca2-b913ccf1db08
+    02250530-c894-4efb-9dc9-837c9c9ea2dd:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 420
+        'y': 90
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - acda484e-7a0d-42e8-9ca2-b913ccf1db08
+    a8c1c18d-119c-4c3c-96ef-90e10b5cb863:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -50
+        'y': 270
+      z: 1
+      embeds: []
