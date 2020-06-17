@@ -39,7 +39,7 @@ Resources:
             Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${InfraPipeSSMParamPipelineRole}'
       Users:
         - !Ref InfraPipeIamUser
-  InfraPipeIamRolePolicy:
+  InfraPipeIamRolePolicyFullAdmin:
     Type: 'AWS::IAM::Policy'
     Properties:
       PolicyName: InfraPipeIamRolePolicy-FullAdmin
@@ -51,17 +51,20 @@ Resources:
             Resource: '*'
       Roles:
         - !Ref InfraPipeIamRole
-  InfraPipeIamGroupPolicy:
+  InfraPipeIamRolePolicyAssumePipelineRole:
     Type: 'AWS::IAM::Policy'
     Properties:
-      PolicyName: InfraPipeIamGroupPolicy-AssumePipelineRole
+      PolicyName: InfraPipeIamRolePolicy-AssumePipelineRole
       PolicyDocument:
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action:
               - 'sts:AssumeRole'
             Resource:
               - !GetAtt InfraPipeIamRole.Arn
+      Roles:
+        - !Ref InfraPipeIamRole
   InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
     Properties:
