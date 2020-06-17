@@ -3,23 +3,30 @@ Description: Create Minimal requirements for InfraPipe
 Parameters:
   InfraPipeEnv:
     Type: String
-    Default: 'dev'
+    Default: dev
     Description: Please enter the environment alias.
+  InfraPipeIamUsername:
+    Type: String
+    Default: terraform
+    Description: Please enter the name of IAM user for the pipeline.
   InfraPipeIamPath:
     Type: String
     Default: /pipeline/
     Description: Please enter the path for IAM roles and groups.
   InfraPipeSsmPath:
     Type: String
-    Default: /pipeline 
+    Default: /pipeline
     Description: Please enter the path for SSM parameters.
 Resources:
   InfraPipeIamUser:
     Type: 'AWS::IAM::User'
     Properties:
-      Path: 
+      Path:
         Ref: InfraPipeIamPath
-      UserName: terraform
+      UserName: !Ref InfraPipeIamUsername
+      Tags:
+        - Key: Name
+          Value: !Ref InfraPipeIamUsername
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 9b913154-bcc1-40b1-9da8-58dc0fece666
@@ -76,7 +83,7 @@ Resources:
     Properties:
       GroupName: !Ref InfraPipeIamGroup
       Users:
-        - terraform
+        - !Ref InfraPipeIamUser
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 9663123c-933a-485a-983e-7f9dd8029cf7
@@ -146,8 +153,8 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: 60
-        'y': 90
+        x: 310
+        'y': 100
       z: 1
       embeds: []
     23ca2be9-9bc8-4be2-bba9-fd53b6664c88:
@@ -155,8 +162,8 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: 180
-        'y': 90
+        x: 190
+        'y': 320
       z: 1
       embeds: []
       dependson:
@@ -166,19 +173,17 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: 60
-        'y': 210
+        x: 190
+        'y': 100
       z: 1
       embeds: []
-      dependson:
-        - f83251e2-ac63-4d7a-a0d2-7e2236bea98f
     23dd57d5-5b07-4b38-8064-2d3103bf5913:
       size:
         width: 60
         height: 60
       position:
-        x: 180
-        'y': 210
+        x: -40
+        'y': 100
       z: 1
       embeds: []
     9663123c-933a-485a-983e-7f9dd8029cf7:
@@ -186,19 +191,20 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: 300
-        'y': 90
+        x: -40
+        'y': 220
       z: 1
       embeds: []
       isassociatedwith:
         - 23dd57d5-5b07-4b38-8064-2d3103bf5913
+        - 9b913154-bcc1-40b1-9da8-58dc0fece666
     3e9b2f34-e3e2-4178-93a3-4ca3e0789d32:
       size:
         width: 60
         height: 60
       position:
-        x: 300
-        'y': 210
+        x: 80
+        'y': 100
       z: 1
       embeds: []
       isassociatedwith:
@@ -208,8 +214,8 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: 60
-        'y': 330
+        x: -40
+        'y': 320
       z: 1
       embeds: []
     acda484e-7a0d-42e8-9ca2-b913ccf1db08:
@@ -217,30 +223,26 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: 180
-        'y': 330
+        x: 80
+        'y': 220
       z: 1
       embeds: []
-      dependson:
-        - 9b913154-bcc1-40b1-9da8-58dc0fece666
     b5cc5a7a-7da9-4074-88b3-dbd20e9118d0:
       size:
         width: 60
         height: 60
       position:
-        x: 300
-        'y': 330
+        x: 190
+        'y': 220
       z: 1
       embeds: []
-      dependson:
-        - acda484e-7a0d-42e8-9ca2-b913ccf1db08
     02250530-c894-4efb-9dc9-837c9c9ea2dd:
       size:
         width: 60
         height: 60
       position:
-        x: 420
-        'y': 90
+        x: 80
+        'y': 320
       z: 1
       embeds: []
       isassociatedwith:
@@ -250,7 +252,7 @@ Metadata:
         width: 60
         height: 60
       position:
-        x: -50
-        'y': 270
+        x: -150
+        'y': 320
       z: 1
       embeds: []
