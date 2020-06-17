@@ -52,7 +52,6 @@ Resources:
               - 'sts:AssumeRole'
             Resource:
               - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/enterprise/Pipeline-*'
-              - !Sub 'arn:aws:iam::${InfraPipeAwsAccountId}:role/bu/Pipeline-*'
       Groups:
         - !Ref InfraPipePipelineGroup
     Metadata:
