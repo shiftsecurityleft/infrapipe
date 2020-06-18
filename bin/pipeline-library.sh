@@ -431,7 +431,8 @@ getAwsCredFromSsm() {
   unset AWS_TFSTATE_S3_BUCKET
   unset AWS_TFSTATE_S3_KEY
 
-  source <( getAwsCredFromEnvVars ${CI_AWSENV} )
+#  source <( getAwsCredFromEnvVars ${CI_AWSENV} )
+  source <( getAwsCredFromEnvVars ${AWSENV} )
    
   source <( getSsmVars "" ${AWS_CRED_SSM_PATH}/${AWSENV} )
 
