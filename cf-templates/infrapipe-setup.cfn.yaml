@@ -63,7 +63,7 @@ Resources:
   InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Pipeline-ops
+      RoleName: !Sub '${InfraPipeIamUsername}-${InfraPipeEnv}-role'
       Path: !Sub '/${InfraPipeIamPath}/'
       AssumeRolePolicyDocument:
         Statement:
