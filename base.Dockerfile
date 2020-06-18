@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-LABEL author="seongyong.kim@shiftsecurityleft.io"
+LABEL author="info@extremevalue.io"
 
 ##################################################################################
 ## Setting up basic env

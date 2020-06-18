@@ -1,6 +1,6 @@
 ARG IMAGE_REF
 FROM $IMAGE_REF/tools
-LABEL author="seongyong.kim@shiftsecurityleft.io"
+LABEL author="info@extremevalue.io"
 
 RUN mkdir -p /root/bin
 ENV PATH=/root/bin:$PATH
