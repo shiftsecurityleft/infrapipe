@@ -3,8 +3,8 @@ Description: Create Minimal requirements for InfraPipe
 Parameters:
   InfraPipeEnv:
     Type: String
-    Default: dev
-    Description: Please enter the environment alias in all lowercase.
+    Default: DEV
+    Description: Please enter the environment alias in all UPPERCASE.
   InfraPipeIamUsername:
     Type: String
     Default: terraform
@@ -75,7 +75,7 @@ Resources:
   InfraPipeTfStateS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub 'tfstate-infrapipe-${InfraPipeEnv}-${AWS::AccountId}'
+      BucketName: !Sub 'tfstate-infrapipe-${AWS::AccountId}'
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
