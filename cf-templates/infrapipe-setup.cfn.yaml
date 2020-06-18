@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create Minimal requirements for InfraPipe
+Parameters:
+  InfraPipeEnv:
+    Type: String
+    Default: dev
+    Description: Please enter the environment alias in all lowercase.
+  InfraPipeIamUsername:
+    Type: String
+    Default: terraform
+    Description: Please enter the name of IAM user for the pipeline in all lowercase.
+  InfraPipeIamPath:
+    Type: String
+    Default: pipeline
+    Description: Please enter the path for IAM roles without beginning or ending with '/'.
+  InfraPipeSsmPath:
+    Type: String
+    Default: security/pipeline
+    Description: Please enter the path for SSM parameters without beginning or ending '/'.
+Resources:
+  InfraPipeIamUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Path: !Sub '/${InfraPipeIamPath}/'
+      UserName: !Ref InfraPipeIamUsername
+  InfraPipeIamUserPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: InfraPipeIamUserPolicy-SSMReadonly
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: ssm:GetParameters
+            Effect: Allow
+            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${InfraPipeSsmPath}/*'
+      Users:
+        - !Ref InfraPipeIamUser
+  InfraPipeIamRolePolicyFullAdmin:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: InfraPipeIamRolePolicy-FullAdmin
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: '*'
+            Effect: Allow
+            Resource: '*'
+      Roles:
+        - !Ref InfraPipeIamRole
+  InfraPipeIamRolePolicyAssumePipelineRole:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: InfraPipeIamRolePolicy-AssumePipelineRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${InfraPipeIamPath}/*'
+      Users:
+        - !Ref InfraPipeIamUser
+  InfraPipeIamRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: Pipeline-ops
+      Path: !Sub '/${InfraPipeIamPath}/'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt InfraPipeIamUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+  InfraPipeTfStateS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub 'tfstate-infrapipe-${InfraPipeEnv}-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
+  InfraPipeSSMParamS3BucketName:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Description: Name of the S3 bucket storing Terraform state
+      Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_BUCKET'
+      Type: String
+      Value: !Ref InfraPipeTfStateS3Bucket
+  InfraPipeSSMParamS3BucketKey:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Description: Key of the S3 bucket storing Terraform state
+      Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_KEY'
+      Type: String
+      Value: terraform.tfstate
+  InfraPipeSSMParamPipelineRole:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Description: Name of Pipeline IAM Role
+      Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
+      Type: String
+      Value: !GetAtt InfraPipeIamRole.Arn
