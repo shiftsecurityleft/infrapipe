@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create Minimal requirements for InfraPipe #4
+Description: Create Minimal requirements for InfraPipe
 Parameters:
   InfraPipeEnv:
     Type: String
     Default: dev
-    Description: Please enter the environment alias.
+    Description: Please enter the environment alias in all lowercase.
   InfraPipeIamUsername:
     Type: String
     Default: terraform
-    Description: Please enter the name of IAM user for the pipeline.
+    Description: Please enter the name of IAM user for the pipeline in all lowercase.
   InfraPipeIamPath:
     Type: String
     Default: pipeline

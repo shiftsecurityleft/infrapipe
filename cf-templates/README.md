@@ -1,0 +1,1 @@
+### The files in this directories are auto-sync to https://shiftsecurityleft-infrapipe-cf.s3.amazonaws.com/infrapipe/branch/$master/cf-templates/* to be used for CloudFormation templates.
