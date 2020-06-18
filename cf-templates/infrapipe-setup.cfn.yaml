@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create Minimal requirements for InfraPipe
+Description: Create Minimal requirements for InfraPipe #1
 Parameters:
   InfraPipeEnv:
     Type: String
