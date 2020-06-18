@@ -71,7 +71,7 @@ Resources:
               - 'sts:AssumeRole'
             Resource:
               - !GetAtt InfraPipeIamRole.Arn
-        Users:
+      Users:
         - !Ref InfraPipeIamUser
   # Create Infrapipe role
   InfraPipeIamRole:
