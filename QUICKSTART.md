@@ -10,6 +10,8 @@
 4. Create AWS access key and secret key for the above user
 
 ## If multi-accounts setup , create the following for each account.
+[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=InfraPipeSetup&templateURL=https://shiftsecurityleft-infrapipe-cf.s3.amazonaws.com/infrapipe/latest/role_setup.yaml
+
 5. IAM role for pipeline: must trust above IAM user
 6. Add IAM role ARN to SSM security/pipeline/<ENV>/AWS_ASSUME_ROLE_ARN
 6. S3 bucket for terraform state remote backend
