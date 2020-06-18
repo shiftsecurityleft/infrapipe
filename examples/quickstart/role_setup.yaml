@@ -63,8 +63,8 @@ Resources:
               - 'sts:AssumeRole'
             Resource:
               - !GetAtt InfraPipeIamRole.Arn
-      Roles:
-        - !Ref InfraPipeIamRole
+        Users:
+        - !Ref InfraPipeIamUser
   InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
     Properties:
