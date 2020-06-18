@@ -11,22 +11,18 @@ Parameters:
     Description: Please enter the name of IAM user for the pipeline.
   InfraPipeIamPath:
     Type: String
-    Default: /pipeline/
-    Description: Please enter the path for IAM roles and groups with beginning and ending with '/'.
+    Default: pipeline
+    Description: Please enter the path for IAM roles without beginning or ending with '/'.
   InfraPipeSsmPath:
     Type: String
     Default: security/pipeline
-    Description: Please enter the path for SSM parameters without beginning and ending '/'.
+    Description: Please enter the path for SSM parameters without beginning or ending '/'.
 Resources:
   InfraPipeIamUser:
     Type: 'AWS::IAM::User'
     Properties:
-      Path:
-        Ref: InfraPipeIamPath
+      Path: !Sub '/${InfraPipeIamPath}/'
       UserName: !Ref InfraPipeIamUsername
-      Tags:
-        - Key: Name
-          Value: !Ref InfraPipeIamUsername
   InfraPipeIamUserPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -36,7 +32,7 @@ Resources:
         Statement:
           - Action: ssm:GetParameters
             Effect: Allow
-            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${InfraPipeSSMParamPipelineRole}'
+            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${InfraPipeSsmPath}/*'
       Users:
         - !Ref InfraPipeIamUser
   InfraPipeIamRolePolicyFullAdmin:
@@ -61,16 +57,14 @@ Resources:
           - Effect: Allow
             Action:
               - 'sts:AssumeRole'
-            Resource:
-              - !GetAtt InfraPipeIamRole.Arn
-      Roles:
-        - !Ref InfraPipeIamRole
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${InfraPipeIamPath}/*'
+      Users:
+        - !Ref InfraPipeIamUser
   InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
     Properties:
       RoleName: Pipeline-ops
-      Path:
-        Ref: InfraPipeIamPath
+      Path: !Sub '/${InfraPipeIamPath}/'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -78,9 +72,6 @@ Resources:
               AWS: !GetAtt InfraPipeIamUser.Arn
             Action:
               - 'sts:AssumeRole'
-      Tags:
-        - Key: Name
-          Value: !Ref InfraPipeIamRole
   InfraPipeTfStateS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -96,9 +87,6 @@ Resources:
         BlockPublicPolicy: TRUE
         IgnorePublicAcls: TRUE
         RestrictPublicBuckets: TRUE
-        Tags:
-          - Key: Name
-            Value: !Ref InfraPipeTfStateS3Bucket
   InfraPipeSSMParamS3BucketName:
     Type: 'AWS::SSM::Parameter'
     Properties:
@@ -106,9 +94,6 @@ Resources:
       Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_BUCKET'
       Type: String
       Value: !Ref InfraPipeTfStateS3Bucket
-      Tags:
-        - Key: Name
-          Value: !Ref InfraPipeSSMParamS3BucketName
   InfraPipeSSMParamS3BucketKey:
     Type: 'AWS::SSM::Parameter'
     Properties:
@@ -116,9 +101,6 @@ Resources:
       Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_TFSTATE_S3_KEY'
       Type: String
       Value: terraform.tfstate
-      Tags:
-        - Key: Name
-          Value: !Ref InfraPipeSSMParamS3BucketKey
   InfraPipeSSMParamPipelineRole:
     Type: 'AWS::SSM::Parameter'
     Properties:
@@ -126,6 +108,3 @@ Resources:
       Name: !Sub '/${InfraPipeSsmPath}/${InfraPipeEnv}/AWS_ASSUME_ROLE_ARN'
       Type: String
       Value: !GetAtt InfraPipeIamRole.Arn
-      Tags:
-        - Key: Name
-          Value: !Ref InfraPipeSSMParamS3BucketKey
