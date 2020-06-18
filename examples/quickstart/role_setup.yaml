@@ -1,23 +1,28 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create Minimal requirements for InfraPipe
 Parameters:
+  # Set the name of your AWS ENVIRONMENT here: dev/qa/prod
   InfraPipeEnv:
     Type: String
     Default: dev
     Description: Please enter the environment alias.
+  # Set the name of Infrapipe USER here
   InfraPipeIamUsername:
     Type: String
     Default: terraform
     Description: Please enter the name of IAM user for the pipeline.
+  # Set path for ROLES to be saved under
   InfraPipeIamPath:
     Type: String
     Default: /pipeline/
-    Description: Please enter the path for IAM roles and groups with beginning and ending with '/'.
+    Description: Please enter the path for IAM roles and users with beginning and ending with '/'.
+  # Set path for SSM PARAMS to be saved under
   InfraPipeSsmPath:
     Type: String
     Default: security/pipeline
     Description: Please enter the path for SSM parameters without beginning and ending '/'.
 Resources:
+  # Create Infrapipe user
   InfraPipeIamUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -27,6 +32,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref InfraPipeIamUsername
+  # Grant read-only SSM permissions to Infrapipe User
   InfraPipeIamUserPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -39,6 +45,7 @@ Resources:
             Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${InfraPipeSSMParamPipelineRole}'
       Users:
         - !Ref InfraPipeIamUser
+  # Grant Full Admin Access to Infrapipe role
   InfraPipeIamRolePolicyFullAdmin:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -51,6 +58,7 @@ Resources:
             Resource: '*'
       Roles:
         - !Ref InfraPipeIamRole
+  # Allow Infrapipe user to assume pipeline role
   InfraPipeIamRolePolicyAssumePipelineRole:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -65,10 +73,11 @@ Resources:
               - !GetAtt InfraPipeIamRole.Arn
         Users:
         - !Ref InfraPipeIamUser
+  # Create Infrapipe role
   InfraPipeIamRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Pipeline-ops
+      RoleName: Pipeline-Ops
       Path:
         Ref: InfraPipeIamPath
       AssumeRolePolicyDocument:
@@ -78,16 +87,20 @@ Resources:
               AWS: !GetAtt InfraPipeIamUser.Arn
             Action:
               - 'sts:AssumeRole'
+  # Create S3 bucket to store Terraform state as remote backend
   InfraPipeTfStateS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Sub 'tfstate-infrapipe-${InfraPipeEnv}-${AWS::AccountId}'
+      # Add bucket encryption
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      # Enable bucket versioning to allow reverting back to previous TF state
       VersioningConfiguration:
         Status: Enabled
+      # Deny public access to bucket
       PublicAccessBlockConfiguration:
         BlockPublicAcls: TRUE
         BlockPublicPolicy: TRUE
