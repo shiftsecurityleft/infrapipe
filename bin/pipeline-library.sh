@@ -537,10 +537,10 @@ doTerraform() {
     WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH}-${APP_PREFIX}
   fi
 
-  #if [[ "${SINGLE_AWS_ACCOUNT}" = "true" ]]; then
-  #  export TF_VAR_CI_AWSENV=${AWSENV}
-  #  export CI_AWSENV=${AWSENV}
-  #fi
+  if [[ "${SSL_SINGLE_ACCOUNT}" = "true" ]]; then
+    export TF_VAR_CI_AWSENV=${AWSENV}
+    export CI_AWSENV=${AWSENV}
+  fi
 
   source <( getAwsCred ${AWSENV} )
 
