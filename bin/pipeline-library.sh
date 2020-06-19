@@ -431,8 +431,7 @@ getAwsCredFromSsm() {
   unset AWS_TFSTATE_S3_BUCKET
   unset AWS_TFSTATE_S3_KEY
 
-  #source <( getAwsCredFromEnvVars ${CI_AWSENV} true )
-  source <( getAwsCredFromEnvVars ${AWSENV} true )
+  source <( getAwsCredFromEnvVars ${CI_AWSENV} )
    
   source <( getSsmVars "" ${AWS_CRED_SSM_PATH}/${AWSENV} )
 
@@ -537,6 +536,11 @@ doTerraform() {
   else
     WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH}-${APP_PREFIX}
   fi
+
+  #if [[ "${SINGLE_AWS_ACCOUNT}" = "true" ]]; then
+  #  export TF_VAR_CI_AWSENV=${AWSENV}
+  #  export CI_AWSENV=${AWSENV}
+  #fi
 
   source <( getAwsCred ${AWSENV} )
 
