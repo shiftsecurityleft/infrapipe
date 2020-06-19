@@ -537,6 +537,11 @@ doTerraform() {
     WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH}-${APP_PREFIX}
   fi
 
+  if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
+    export TF_VAR_CI_AWSENV=${AWSENV}
+    export CI_AWSENV=${AWSENV}
+  fi
+
   source <( getAwsCred ${AWSENV} )
 
   #### Create provider-aws.tf if any other provider* does not exists.
