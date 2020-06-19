@@ -18,9 +18,7 @@ before_script:
     [ "$(command -v terraform)" ] && terraform --version
 
 stages:
-  - build-base
-  - build-tools
-  - build-pipeline
+  - build
   - test
   - push-tags
   
@@ -41,14 +39,13 @@ container_scanning:
     changes:
       - .gitlab-ci.yml
   variables:
-    SUB_IMAGE: ""
     DOCKERFILE: "Dockerfile"
   script:
-    - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:latest --build-arg IMAGE_REF=$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA -f $DOCKERFILE .
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA
-    - docker tag  $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:latest
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:latest
+    - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest --build-arg IMAGE_REF=$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA -f $DOCKERFILE .
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
+    - docker tag  $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
     - |
       if [[ -z $SUB_IMAGE ]]; then
         docker tag  $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
@@ -56,43 +53,17 @@ container_scanning:
       fi
 
 
-build-base:
+build:
   extends: .build-docker
   only:
     changes:
-      - base.Dockerfile
-      - .gitlab-ci.yml
-  variables:
-    SUB_IMAGE: "/base"
-    DOCKERFILE: "base.Dockerfile"
-  stage: build-base
-
-build-tools:
-  extends: .build-docker
-  only:
-    changes:
-      - base.Dockerfile
-      - tools.Dockerfile
-      - .gitlab-ci.yml
-  variables:
-    SUB_IMAGE: "/tools"
-    DOCKERFILE: "tools.Dockerfile"
-  stage: build-tools
-
-build-pipeline:
-  extends: .build-docker
-  only:
-    changes:
-      - base.Dockerfile  
-      - tools.Dockerfile
       - Dockerfile
       - bin/*
       - .gitlab-ci.yml
   variables:
-    SUB_IMAGE: ""
     DOCKERFILE: "Dockerfile"
-  stage: build-pipeline
-    
+  stage: build
+
 push-tags:
   only:
     - tags
@@ -110,7 +81,7 @@ push-tags:
     #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
 
 test-image:
-  image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG$SUB_IMAGE:$CI_COMMIT_SHA
+  image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
   except:
     - tags
   stage: test
