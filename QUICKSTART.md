@@ -2,7 +2,7 @@
 
 
 ## Run the pipeline to build the pipeline image
-1. Clone the repo to Gitlab
+1. Clone the repo to [Gitlab](https://gitlab.com)
 - Go to New Project -> Import Project -> Repo by URL
 - Type in repository url: https://github.com/shiftsecurityleft/infrapipe.git
 - Click Create Project
