@@ -1,12 +1,10 @@
 # Quick Start Guide
 
-
-## Run the pipeline to build the pipeline image
 1. Clone the repo to [Gitlab](https://gitlab.com)
-- Go to New Project -> Import Project -> Repo by URL
-- Type in repository url: https://github.com/shiftsecurityleft/infrapipe.git
-- Click Create Project
-2. Run the default pipeline
+* a. Go to New Project -> Import Project -> Repo by URL
+* b. Type in repository url: https://github.com/shiftsecurityleft/infrapipe.git
+* c. Click Create Project
+2. Run the default pipeline to build the base Docker image
 
 ## Set up the config file with AWS account / IAM imfo : CloudFormation
 3. Create AWS user with assume role of the pipeline policy only
