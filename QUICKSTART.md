@@ -1,9 +1,9 @@
 # Quick Start Guide
 
 1. Clone the repo to [Gitlab](https://gitlab.com)
-* a. Go to New Project -> Import Project -> Repo by URL
-* b. Type in repository url: https://github.com/shiftsecurityleft/infrapipe.git
-* c. Click Create Project
+a. Go to New Project -> Import Project -> Repo by URL
+b. Type in repository url: https://github.com/shiftsecurityleft/infrapipe.git
+c. Click Create Project
 2. Run the default pipeline to build the base Docker image
 
 ## Set up the config file with AWS account / IAM imfo : CloudFormation
