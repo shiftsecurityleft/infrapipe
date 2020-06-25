@@ -3,7 +3,7 @@
 FROM ubuntu:18.04 as baseimage
 LABEL author="info@extremevalue.io"
 
-touch /root/.profile
+RUN touch /root/.profile
 
 # Install base dependencies
 RUN apt-get update \
