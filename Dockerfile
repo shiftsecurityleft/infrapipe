@@ -3,7 +3,7 @@
 FROM ubuntu:18.04 as baseimage
 LABEL author="info@extremevalue.io"
 
-RUN touch /root/.profile
+RUN touch /root/.tmp_profile
 
 # Install base dependencies
 RUN apt-get update \
@@ -74,8 +74,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/instal
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
     && nvm use default \
-		&& echo 'export NVM_DIR="/root/.nvm"' >> /root/.profile \
-		&& echo '[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"' >> /root/.profile
+		&& echo 'export NVM_DIR="/root/.nvm"' >> /root/.tmp_profile \
+		&& echo '[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"' >> /root/.tmp_profile
 
 
 # Set node path
@@ -203,12 +203,12 @@ COPY ./bin /root/bin
 # RUN echo 'export PATH=/root/bin:$PATH' > temp
 # RUN echo 'source /root/bin/pipeline-library.sh' >> temp
 # RUN echo '[ -f /opt/gitlab/cicd/agent/build/pipeline-override.sh ] && source /opt/gitlab/cicd/agent/build/pipeline-override.sh' >> temp
-# RUN mv temp $HOME/.profile
-RUN echo 'export PATH=/root/bin:$PATH' >> /root/.profile 
-RUN echo 'source /root/bin/pipeline-library.sh' >> /root/.profile
-RUN echo '[ -f /opt/gitlab/cicd/agent/build/pipeline-override.sh ] && source /opt/gitlab/cicd/agent/build/pipeline-override.sh' >> /root/.profile
+# RUN mv temp $HOME/.tmp_profile
+RUN echo 'export PATH=/root/bin:$PATH' >> /root/.tmp_profile 
+RUN echo 'source /root/bin/pipeline-library.sh' >> /root/.tmp_profile
+RUN echo '[ -f /opt/gitlab/cicd/agent/build/pipeline-override.sh ] && source /opt/gitlab/cicd/agent/build/pipeline-override.sh' >> /root/.tmp_profile
 # Must override .bashrc because the default .bashrc early terminate if not interactive
-RUN cp /root/.profile /root/.bashrc
+RUN cp /root/.tmp_profile /root/.bashrc
 
 # test This is needed so that it will execute .bashrc at the beginning of Gitlab CI scripts
 SHELL ["/bin/bash", "-c", "-l"]
