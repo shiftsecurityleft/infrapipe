@@ -783,7 +783,7 @@ runCvaScan() {
   SCAN_RESULT=cvascan-${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}.json
   
   snyk test --severity-threshold=low --docker ${DOCKER_IMAGE} --file=${DOCKERFILE} --json > ${SCAN_RESULT} || tlog INFO "Ignoring CVA vulnerability..."
-  yqc r ${SCAN_RESULT}
+  #yqc r ${SCAN_RESULT}
 
   #uploadScanResultToS3 ${SCAN_RESULT}
 
@@ -800,7 +800,7 @@ runScaScan() {
   
   cd ${APP_DIR}
   snyk test --severity-threshold=low --json > ${SCAN_RESULT} || tlog INFO "Ignoring SCA vulnerability..."
-  yqc r ${SCAN_RESULT}
+  #yqc r ${SCAN_RESULT}
 
   #uploadScanResultToS3 ${SCAN_RESULT}
 
@@ -812,7 +812,7 @@ export -f runScaScan
 
 runLocalSonarScanner() {
   APP_DIR=$1
-  SCAN_RESULT=$2
+  SCAN_RESULT=localsonarscan-${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}.json
 
   SONAR_LOGIN=admin
   SONAR_PASSWORD=admin
@@ -822,8 +822,8 @@ runLocalSonarScanner() {
   docker run -d --name sonarqube -p ${SONAR_PORT}:${SONAR_PORT} sonarqube:lts-alpine
 
   until [[ $(curl -u ${SONAR_LOGIN}:${SONAR_PASSWORD} -sSL "${SONAR_URL}/api/system/status" | jq -r '.status') = "UP" ]]; do
-      tlog INFO 'waiting for sonarqube server to start...'
-      sleep 5
+    tlog INFO 'waiting for sonarqube server to start...'
+    sleep 5
   done
   sleep 10
 
@@ -843,7 +843,7 @@ runLocalSonarScanner() {
   sleep 10
 
   curl -u ${SONAR_LOGIN}:${SONAR_PASSWORD} -sSL "${SONAR_URL}/api/issues/search?componentKeys=${REPO_NAME}"  > ${SCAN_RESULT}
-  yqc r ${SCAN_RESULT}
+  #yqc r ${SCAN_RESULT}
   docker stop sonarqube
   docker rm sonarqube
 
