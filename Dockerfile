@@ -189,14 +189,7 @@ ENV PATH=/root/sonar-scanner/bin:$PATH
 ENV DOCKER_CHANNEL=stable
 ENV DOCKER_VERSION=19.03.12
 RUN set -eux; \
-	apkArch="$(apk --print-arch)"; \
-    case "$apkArch" in \
-        x86_64) dockerArch='x86_64' ;; \
-        armhf) dockerArch='armel' ;; \
-        armv7) dockerArch='armhf' ;; \
-        aarch64) dockerArch='aarch64' ;; \
-        *) echo >&2 "error: unsupported architecture ($apkArch)"; exit 1 ;;	\
-    esac; \
+    dockerArch='x86_64' ; \
     if ! wget -O docker.tgz "https://download.docker.com/linux/static/${DOCKER_CHANNEL}/${dockerArch}/docker-${DOCKER_VERSION}.tgz"; then \
         echo >&2 "error: failed to download 'docker-${DOCKER_VERSION}' from '${DOCKER_CHANNEL}' for '${dockerArch}'"; \
         exit 1; \

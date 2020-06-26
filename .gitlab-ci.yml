@@ -119,5 +119,7 @@ test-image:
       [ "$(command -v terraform)" ] && terraform --version
     - |
       [ "$(command -v aws)" ] && aws --version
+    - |
+      [ "$(command -v docker)" ] && docker --version
 
 
