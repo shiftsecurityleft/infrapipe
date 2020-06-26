@@ -765,7 +765,7 @@ runTerraformByComment() {
 }
 export -f runTerraformByComment
 
-uploadScanResult() {
+uploadScanResultToS3() {
   SCAN_RESULT=$1
 
   source <(getSsmVarsFromTargetEnv)
@@ -774,18 +774,18 @@ uploadScanResult() {
 
   aws s3 cp ${SCAN_RESULT} s3://${SCANRESULTSBUCKET}/${REPO_NAME}/${REPO_BRANCH_ENCODED}/${REPO_COMMIT_HASH:0:7}/${PIPELINE_BUILD_NUM}/${SCAN_RESULT}
 }
-export -f uploadScanResult
+export -f uploadScanResultToS3
 
 # Run Container Vulnerability Analysis Scan
 runCvaScan() { 
   DOCKER_IMAGE=$1
   DOCKERFILE=$2
-  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-cvascan.json
+  SCAN_RESULT=cvascan-${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}.json
   
   snyk test --severity-threshold=low --docker ${DOCKER_IMAGE} --file=${DOCKERFILE} --json > ${SCAN_RESULT} || tlog INFO "Ignoring CVA vulnerability..."
   yqc r ${SCAN_RESULT}
 
-  uploadScanResult ${SCAN_RESULT}
+  #uploadScanResultToS3 ${SCAN_RESULT}
 
   if [[ "${UPLOAD_SCAN_RESULT}" = "true" ]]; then
     snyk monitor --severity-threshold=low --docker ${DOCKER_IMAGE} --file=${DOCKERFILE} --org=${REPO_WORKSPACE} --project-name=${REPO_NAME}-docker || tlog INFO "Ignoring CVA vulnerability..."
@@ -796,13 +796,13 @@ export -f runCvaScan
 # Run Software Composition Analysis Scan
 runScaScan() {
   APP_DIR=$1
-  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-scascan.json
+  SCAN_RESULT=scascan-${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}.json
   
   cd ${APP_DIR}
   snyk test --severity-threshold=low --json > ${SCAN_RESULT} || tlog INFO "Ignoring SCA vulnerability..."
   yqc r ${SCAN_RESULT}
 
-  uploadScanResult ${SCAN_RESULT}
+  #uploadScanResultToS3 ${SCAN_RESULT}
 
   if [[ "${UPLOAD_SCAN_RESULT}" = "true" ]]; then
     snyk monitor --severity-threshold=low --org=${REPO_WORKSPACE} --project-name=${REPO_NAME} || tlog INFO "Ignoring SCA vulnerability..."
@@ -865,11 +865,11 @@ export -f runLocalSonarScanner
 
 runSastScan() {
   APP_DIR=$1
-  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-sastscan.json
+  SCAN_RESULT=sastscan-${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}.json
 
   runLocalSonarScanner ${APP_DIR} ${SCAN_RESULT}
 
-  uploadScanResult ${SCAN_RESULT}
+  #uploadScanResultToS3 ${SCAN_RESULT}
 
   if [[ "${UPLOAD_SCAN_RESULT}" = "true" ]]; then
     sonar-scanner \
