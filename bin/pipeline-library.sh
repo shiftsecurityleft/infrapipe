@@ -45,6 +45,7 @@ mapBitbucketPipelineVars() {
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     export TF_VAR_CI_AWSENV=CI1
     export TF_VAR_REPO_BRANCH=${BITBUCKET_BRANCH}
+    export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${BITBUCKET_TAG}
     export TF_VAR_REPO_NAME=${BITBUCKET_REPO_SLUG}
     export TF_VAR_REPO_WORKSPACE=${BITBUCKET_WORKSPACE}
@@ -111,6 +112,7 @@ mapGitlabPipelineVars() {
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     export TF_VAR_CI_AWSENV=CI1
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
+    export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${CI_COMMIT_TAG}
     export TF_VAR_REPO_NAME=${CI_PROJECT_NAME}
     export TF_VAR_REPO_WORKSPACE=${CI_PROJECT_NAMESPACE}
@@ -280,11 +282,11 @@ uploadToEcr() {
   docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${IMAGE_TAG}
   docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${IMAGE_TAG}
 
-  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH}-${PIPELINE_BUILD_NUM}
-  docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH}-${PIPELINE_BUILD_NUM}
+  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH_ENCODED}-${PIPELINE_BUILD_NUM}
+  docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH_ENCODED}-${PIPELINE_BUILD_NUM}
 
-  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH}
-  docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH}
+  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH_ENCODED}
+  docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_NAME}:${REPO_BRANCH_ENCODED}
 
   # Nothing should use latest tag
   #if [[ "${REPO_BRANCH}" = "master" ]]; then
@@ -532,9 +534,9 @@ doTerraform() {
   APP_PREFIX=$2
 
   if [[ -z $APP_PREFIX ]]; then
-    WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH}
+    WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH_ENCODED}
   else
-    WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH}-${APP_PREFIX}
+    WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${APP_PREFIX}
   fi
 
   if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
@@ -770,7 +772,7 @@ uploadScanResult() {
   source <(getAwsCred $(getAwsEnvBasedOnBranchName))
   tlog DEBUG "$( ( set -o posix ; set ) | grep AWS_ )"
 
-  aws s3 cp ${SCAN_RESULT} s3://${SCANRESULTSBUCKET}/${REPO_NAME}/${REPO_BRANCH}/${REPO_COMMIT_HASH:0:7}/${PIPELINE_BUILD_NUM}/${SCAN_RESULT}
+  aws s3 cp ${SCAN_RESULT} s3://${SCANRESULTSBUCKET}/${REPO_NAME}/${REPO_BRANCH_ENCODED}/${REPO_COMMIT_HASH:0:7}/${PIPELINE_BUILD_NUM}/${SCAN_RESULT}
 }
 export -f uploadScanResult
 
@@ -778,7 +780,7 @@ export -f uploadScanResult
 runCvaScan() { 
   DOCKER_IMAGE=$1
   DOCKERFILE=$2
-  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-cvascan.json
+  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-cvascan.json
   
   snyk test --severity-threshold=low --docker ${DOCKER_IMAGE} --file=${DOCKERFILE} --json > ${SCAN_RESULT} || tlog INFO "Ignoring CVA vulnerability..."
   yqc r ${SCAN_RESULT}
@@ -794,7 +796,7 @@ export -f runCvaScan
 # Run Software Composition Analysis Scan
 runScaScan() {
   APP_DIR=$1
-  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-scascan.json
+  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-scascan.json
   
   cd ${APP_DIR}
   snyk test --severity-threshold=low --json > ${SCAN_RESULT} || tlog INFO "Ignoring SCA vulnerability..."
@@ -863,7 +865,7 @@ export -f runLocalSonarScanner
 
 runSastScan() {
   APP_DIR=$1
-  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-sastscan.json
+  SCAN_RESULT=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${REPO_COMMIT_HASH:0:7}-${PIPELINE_BUILD_NUM}-sastscan.json
 
   runLocalSonarScanner ${APP_DIR} ${SCAN_RESULT}
 

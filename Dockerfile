@@ -1,7 +1,7 @@
 ##################################################
 ## Build base stage
 FROM ubuntu:18.04 as baseimage
-LABEL author="info@extremevalue.io"
+LABEL author="infrapipe@shiftsecurityleft.io"
 
 RUN touch /root/.tmp_profile
 
@@ -47,7 +47,7 @@ ENTRYPOINT /bin/bash
 ###############################################
 ## Build tools stage
 FROM baseimage as toolsimage
-LABEL author="info@extremevalue.io"
+LABEL author="infrapipe@shiftsecurityleft.io"
 
 #ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/New_York
@@ -195,7 +195,7 @@ ENTRYPOINT /bin/bash
 ########################################################################
 # build  Pipeline image
 FROM toolsimage as pipeimage
-LABEL author="info@extremevalue.io"
+LABEL author="infrapipe@shiftsecurityleft.io"
 
 RUN mkdir -p /root/bin
 ENV PATH=/root/bin:$PATH
