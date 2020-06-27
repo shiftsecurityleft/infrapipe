@@ -8,39 +8,24 @@ variables:
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
 
-before_script:
-  - |
-    if [ "$(command -v docker)" ]; then  
-      docker --version
-      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    fi
-  - |
-    [ "$(command -v terraform)" ] && terraform --version
-
 stages:
   - build
   - test
   - push-tags
   
-include:
-  - template: Container-Scanning.gitlab-ci.yml
-  # uncomment next if it is for app.
-  #- template: Dependency-Scanning.gitlab-ci.yml
-
-container_scanning:
-  variables:
-    GIT_STRATEGY: fetch
-    KLAR_TRACE: "true"
-
-.build-docker:
+docker-build:
   only:
     refs:
       - branches
     changes:
+      - Dockerfile
+      - bin/*
       - .gitlab-ci.yml
   variables:
     DOCKERFILE: "Dockerfile"
+  stage: build
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
     - docker build --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest --build-arg IMAGE_REF=$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA -f $DOCKERFILE .
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
@@ -52,18 +37,6 @@ container_scanning:
         docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       fi
 
-
-build:
-  extends: .build-docker
-  only:
-    changes:
-      - Dockerfile
-      - bin/*
-      - .gitlab-ci.yml
-  variables:
-    DOCKERFILE: "Dockerfile"
-  stage: build
-
 push-tags:
   only:
     - tags
@@ -73,21 +46,9 @@ push-tags:
     - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - apk add curl
-    # In near future Gitlab release-cli will be used here.
-    #- echo "Release -- https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases"
-    #- |
-    #  curl --header 'Content-Type: application/json' --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
-    #   --data '{ "name": "${CI_COMMIT_REF_NAME}", "tag_name": "${CI_COMMIT_REF_NAME}", "description": "${CI_COMMIT_MESSAGE}", "ref": "${CI_COMMIT_REF_NAME}" }' \
-    #   --request POST https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/releases
 
 test-image:
   image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-  services:
-    - docker:dind
-  variables:
-    # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"  
   except:
     - tags
   stage: test
