@@ -82,6 +82,12 @@ push-tags:
 
 test-image:
   image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
+  services:
+    - docker:dind
+  variables:
+    # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"  
   except:
     - tags
   stage: test
@@ -120,6 +126,6 @@ test-image:
     - |
       [ "$(command -v aws)" ] && aws --version
     - |
-      [ "$(command -v docker)" ] && docker --version
+      [ "$(command -v docker)" ] && docker info
 
 
