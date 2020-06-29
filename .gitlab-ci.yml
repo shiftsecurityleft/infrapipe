@@ -49,8 +49,10 @@ push-tags:
 
 test-image:
   image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-  except:
-    - tags
+  variables:
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:stable-dind  
   stage: test
   script:
     - cat $HOME/.profile
