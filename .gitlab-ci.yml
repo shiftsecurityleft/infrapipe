@@ -1,9 +1,11 @@
 image: docker:latest
 
 services:
-  - docker:dind
+  services:
+    - docker:stable-dind  
 
 variables:
+  DOCKER_DRIVER: overlay2
   # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
@@ -49,10 +51,6 @@ push-tags:
 
 test-image:
   image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-  variables:
-    DOCKER_DRIVER: overlay2
-  services:
-    - docker:stable-dind  
   stage: test
   script:
     - cat $HOME/.profile
@@ -89,6 +87,6 @@ test-image:
     - |
       [ "$(command -v aws)" ] && aws --version
     - |
-      [ "$(command -v docker)" ] && docker info
+      [ "$(command -v docker)" ] && docker --version
 
 
