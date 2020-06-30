@@ -11,8 +11,8 @@ variables:
 
 stages:
   - build
-  - push-tags
   - test
+  - push-tags
   
 docker-build:
   only:
@@ -30,21 +30,10 @@ docker-build:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA || true
     - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -f $DOCKERFILE .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-
-push-tags:
-  only:
-    - tags
-  stage: push-tags
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
 test-image:
-  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  stage: test
+  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  stage: test 
   script:
     - cat $HOME/.profile
     - |
@@ -82,4 +71,18 @@ test-image:
     - |
       [ "$(command -v docker)" ] && docker --version && docker info
 
+push-tag:
+  only:
+    - tags
+  stage: push-image-tag
+  script:
+    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
+push-branch:
+  only:
+    - branches
+  stage: push-image-tags
+  script:
+    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
