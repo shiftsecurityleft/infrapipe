@@ -12,7 +12,7 @@ variables:
 stages:
   - build
   - test
-  - push-image-tags
+  - push-image-tag
   
 docker-build:
   only:
@@ -82,7 +82,7 @@ push-tag:
 push-branch:
   only:
     - branches
-  stage: push-image-tags
+  stage: push-image-tag
   script:
     - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
