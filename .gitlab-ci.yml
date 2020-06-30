@@ -12,7 +12,7 @@ variables:
 stages:
   - build
   - test
-  - push-tags
+  - push-image-tags
   
 docker-build:
   only:
