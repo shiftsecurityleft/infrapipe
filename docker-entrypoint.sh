@@ -58,6 +58,4 @@ if [ "$1" = 'dockerd' ]; then
 	sleep 3
 fi
 
-source /root/bin/pipeline-library.sh
-
 exec "$@"

@@ -31,6 +31,7 @@ test-image:
   image: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   stage: test 
   script:
+    - source /root/bin/pipeline-library.sh
     - cat $HOME/.profile
     - |
       [ "$(command -v nvm)" ] && nvm --version
