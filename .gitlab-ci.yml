@@ -76,6 +76,7 @@ push-tag:
     - tags
   stage: push-image-tag
   script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
@@ -84,5 +85,6 @@ push-branch:
     - branches
   stage: push-image-tag
   script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
