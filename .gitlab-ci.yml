@@ -18,10 +18,6 @@ docker-build:
   only:
     refs:
       - branches
-    changes:
-      - Dockerfile
-      - bin/*
-      - .gitlab-ci.yml
   variables:
     DOCKERFILE: "Dockerfile"
   stage: build
