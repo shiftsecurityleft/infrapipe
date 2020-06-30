@@ -201,8 +201,6 @@ ENV DOCKER_TLS_CERTDIR=/certs
 
 RUN mkdir /certs /certs/client && chmod 1777 /certs /certs/client
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-
 ########################################################################
 ########################################################################
 # build  Pipeline image
@@ -226,3 +224,6 @@ SHELL ["/bin/bash", "-c", "-l"]
 
 WORKDIR /opt/gitlab/cicd/agent/build
 
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD ["/bin/bash"]
