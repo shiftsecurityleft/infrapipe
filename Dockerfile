@@ -224,6 +224,6 @@ SHELL ["/bin/bash", "-c", "-l"]
 
 WORKDIR /opt/gitlab/cicd/agent/build
 
-ENTRYPOINT ["docker-entrypoint.sh", "/bin/bash"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["/bin/bash"]
