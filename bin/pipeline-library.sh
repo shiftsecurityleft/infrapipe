@@ -279,6 +279,7 @@ uploadToEcr() {
     export IMAGE_TAG="${REPO_COMMIT_HASH:0:7}"
   fi
 
+  ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
   aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
     | docker login \
       --username AWS \
