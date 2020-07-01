@@ -43,11 +43,6 @@ mapBitbucketPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
-      export TF_VAR_CI_AWSENV=${AWSENV}
-    else
-      export TF_VAR_CI_AWSENV=
-    fi
     export TF_VAR_REPO_DIR=${BITBUCKET_CLONE_DIR}
     export TF_VAR_REPO_BRANCH=${BITBUCKET_BRANCH}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
@@ -115,11 +110,6 @@ mapGitlabPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
-      export TF_VAR_CI_AWSENV=${AWSENV}
-    else
-      export TF_VAR_CI_AWSENV=
-    fi
     export TF_VAR_REPO_DIR=${CI_PROJECT_DIR}
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
@@ -400,6 +390,14 @@ export -f runWithAwsCred
 getAwsCred() {
   AWSENV=$1
   DO_NOT_ASSUME_ROLE=$2
+
+  if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
+    export TF_VAR_CI_AWSENV=${AWSENV}
+    export CI_AWSENV=${AWSENV}
+  else
+    export TF_VAR_CI_AWSENV=
+    export CI_AWSENV=
+  fi
 
   if [[ "${AWS_CRED_MODE}" = "SSM_CA_ROLES" ]]; then 
     getAwsCredFromSsm ${AWSENV} ${DO_NOT_ASSUME_ROLE}
