@@ -44,6 +44,7 @@ mapBitbucketPipelineVars() {
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     export TF_VAR_CI_AWSENV=CI1
+    export TF_VAR_REPO_DIR=${BITBUCKET_CLONE_DIR}
     export TF_VAR_REPO_BRANCH=${BITBUCKET_BRANCH}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${BITBUCKET_TAG}
@@ -111,6 +112,7 @@ mapGitlabPipelineVars() {
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     export TF_VAR_CI_AWSENV=CI1
+    export TF_VAR_REPO_DIR=${CI_PROJECT_DIR}
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${CI_COMMIT_TAG}
@@ -163,7 +165,11 @@ export -f mapGitlabPipelineVars
 
 getFamilies() {
   if [[ -z ${FAMILY_YML_CACHE} ]]; then
-    export FAMILY_YML_CACHE=$(eval "curl -sSL ${FAMILY_YML}")
+    if [[ -f ${REPO_DIR}/manifest/family.yml ]]; then
+      export FAMILY_YML_CACHE=$(cat ${REPO_DIR}/manifest/family.yml)
+    else
+      export FAMILY_YML_CACHE=$(eval "curl -sSL ${FAMILY_YML}")
+    fi
   fi
   echo "${FAMILY_YML_CACHE}"
 }
@@ -186,7 +192,11 @@ loadManifest() {
 
   if [[ ! -z ${APP_FAMILY} ]]; then
     if [[ -z ${MANIFEST_YML_CACHE} ]]; then
-      export MANIFEST_YML_CACHE=$(eval "curl -sSL ${MANIFEST_YML}")
+      if [[ -f ${REPO_DIR}/manifest/${APP_FAMILY}/manifest.yml ]]; then
+        export MANIFEST_YML_CACHE=$(cat ${REPO_DIR}/manifest/${APP_FAMILY}/manifest.yml)
+      else
+        export MANIFEST_YML_CACHE=$(eval "curl -sSL ${MANIFEST_YML}")
+      fi
     fi
     echo "${MANIFEST_YML_CACHE}"
   fi
