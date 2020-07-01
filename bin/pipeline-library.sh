@@ -279,7 +279,10 @@ uploadToEcr() {
     export IMAGE_TAG="${REPO_COMMIT_HASH:0:7}"
   fi
 
-  eval "$(aws ecr get-login --no-include-email)"
+  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+    | docker login \
+      --username AWS \
+      --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com     
 
   tlog INFO "Creating ECR repo: ${IMAGE_NAME} if not exists..."
   aws ecr describe-repositories --repository-names ${IMAGE_NAME} || aws ecr create-repository --repository-name ${IMAGE_NAME}
@@ -704,12 +707,18 @@ copyImage() {
 
   source <(getAwsCred ${FROM_AWSENV})
   FROM_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
-  eval "$(aws ecr get-login --no-include-email)"
+  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+    | docker login \
+      --username AWS \
+      --password-stdin ${FROM_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com     
   docker pull ${FROM_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${FROM_IMAGE}
 
   source <(getAwsCred ${TO_AWSENV})
   TO_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
-  eval "$(aws ecr get-login --no-include-email)"
+  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+    | docker login \
+      --username AWS \
+      --password-stdin ${TO_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com     
 
   aws ecr describe-repositories --repository-names ${TO_IMAGE%%:*} || aws ecr create-repository --repository-name ${TO_IMAGE%%:*}
   docker tag ${FROM_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${FROM_IMAGE} ${TO_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${TO_IMAGE}
