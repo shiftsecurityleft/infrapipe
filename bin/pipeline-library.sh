@@ -45,7 +45,6 @@ mapBitbucketPipelineVars() {
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
       export TF_VAR_CI_AWSENV=${AWSENV}
-      export CI_AWSENV=${AWSENV}
     else
       export TF_VAR_CI_AWSENV=
     fi
@@ -118,7 +117,6 @@ mapGitlabPipelineVars() {
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
       export TF_VAR_CI_AWSENV=${AWSENV}
-      export CI_AWSENV=${AWSENV}
     else
       export TF_VAR_CI_AWSENV=
     fi
