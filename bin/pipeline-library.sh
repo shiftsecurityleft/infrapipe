@@ -43,7 +43,8 @@ mapBitbucketPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    export TF_VAR_CI_AWSENV=CI1
+    export TF_VAR_CI_AWSENV=
+    export TF_VAR_SSL_MULTI_ACCOUNTS=true
     export TF_VAR_REPO_DIR=${BITBUCKET_CLONE_DIR}
     export TF_VAR_REPO_BRANCH=${BITBUCKET_BRANCH}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
@@ -111,7 +112,8 @@ mapGitlabPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    export TF_VAR_CI_AWSENV=CI1
+    export TF_VAR_SSL_MULTI_ACCOUNTS=true
+    export TF_VAR_CI_AWSENV=
     export TF_VAR_REPO_DIR=${CI_PROJECT_DIR}
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
