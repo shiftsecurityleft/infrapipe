@@ -99,21 +99,21 @@ mapBitbucketPipelineVars() {
     mapAppPipelineVars
 
     tlog DEBUG '============== show env ==================='
-    tlog DEBUG "$( ( set -o posix ; set ) | grep TF_VAR_ )"
+    tlog DEBUG "$( ( set -o posix ; set ) | grep ^TF_VAR_ )"
     tlog DEBUG '-------------------------------------------'
 
     # Add ENV vars starting with TF_VAR_ without TF_VAR_
     OLD_IFS=$IFS
     IFS==; while read KEY VALUE; do
       export ${KEY//TF_VAR_/}=${VALUE}
-    done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+    done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
     IFS=$OLD_IFS
 
     # Add ENV vars starting with TF_VAR_ as TAGS without TF_VAR_
     #TAGS=""
     #IFS==; while read KEY VALUE; do
     #  TAGS="$TAGS\n${KEY//TF_VAR_/} = \"${VALUE}\""
-    #done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+    #done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
     #export TAGS
   else
     tlog ERROR "This is NOT Bitbucket pipeline or missing Bitbucket pipeline variables for some reason if it is."
@@ -169,14 +169,14 @@ mapGitlabPipelineVars() {
     mapAppPipelineVars
 
     tlog DEBUG '============== show env ==================='
-    tlog DEBUG "$( ( set -o posix ; set ) | grep TF_VAR_ )"
+    tlog DEBUG "$( ( set -o posix ; set ) | grep ^TF_VAR_ )"
     tlog DEBUG '-------------------------------------------'
 
     # Add ENV vars starting with TF_VAR_ without TF_VAR_
     OLD_IFS=$IFS
     IFS==; while read KEY VALUE; do
       export ${KEY//TF_VAR_/}=${VALUE}
-    done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+    done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
     IFS=$OLD_IFS
 
   else
@@ -284,7 +284,7 @@ buildDockerImage() {
   OLD_IFS=$IFS
   IFS==; while read KEY VALUE; do
     BUILD_ARGS="${BUILD_ARGS} --build-arg ${KEY//TF_VAR_/}"
-  done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+  done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
   IFS=$OLD_IFS
   
   tlog INFO "Building a production docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
@@ -524,7 +524,7 @@ createCommonTagsFile() {
     if [[ ! -z ${VALUE} ]]; then 
       echo "${KEY//TF_VAR_/} = \"${VALUE//\'/}\"" >> ${COMMON_TAGS}
     fi
-  done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+  done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
   IFS=$OLD_IFS
   
   echo "  }" >> ${COMMON_TAGS}
