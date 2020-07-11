@@ -35,6 +35,21 @@ trim() {
 }
 export -f trim
 
+mapAppPipelineVars() {
+  export TF_VAR_AWSENV=$(getAwsEnvBasedOnBranchName)
+  export TF_VAR_APPENV=$(getAppEnvBasedOnBranchName)
+  export TF_VAR_DOMAIN=$(getDomainBasedOnBranchName)  # parse ENV and DOMAIN from $DEPLOY's json
+  export TF_VAR_APP_PREFIX=$(getAppNameBasedOnRepoName)
+  export TF_VAR_APP_POSTFIX=$(eval echo $(getPostfixBasedOnBranchName))
+  export TF_VAR_APP_UUID=${TF_VAR_APP_PREFIX}-${TF_VAR_APP_BRANCH_UUID}
+  export TF_VAR_APP_FULLNAME=${TF_VAR_APP_PREFIX}${TF_VAR_APP_POSTFIX}
+  export TF_VAR_FAMILY=$(getFamilyName)
+  export TF_VAR_SSM_PATH=$(getSsmPath)
+  export TF_VAR_APP_IMAGE=${REPO_NAME}
+  export TF_VAR_APP_IMAGE_TAG=${REPO_COMMIT_HASH:0:7}
+}
+export -f mapAppPipelineVars
+
 mapBitbucketPipelineVars() {
   # Check to make sure this is run in BITBUCKET pipeline by checking BITBUCKET_REPO_SLUG var exists.
   if [[ ! -z "${BITBUCKET_REPO_SLUG}" ]]; then
@@ -63,6 +78,7 @@ mapBitbucketPipelineVars() {
     #   SSM_VARS = read /devops/<ENV>/AWS_* vars from CI account, 
     #   SSM_CA_ROLES = read /devops/<ENV>/AWS_CROSSACCOUNT_ROLE from CI account
     export TF_VAR_AWS_CRED_MODE=SSM_CA_ROLES
+    mapAppPipelineVars
 
     tlog DEBUG '============== show env ==================='
     tlog DEBUG "$( ( set -o posix ; set ) | grep TF_VAR_ )"
@@ -129,6 +145,8 @@ mapGitlabPipelineVars() {
     #   SSM_VARS = read /devops/<ENV>/AWS_* vars from CI account, 
     #   SSM_CA_ROLES = read /devops/<ENV>/AWS_CROSSACCOUNT_ROLE from CI account
     export TF_VAR_AWS_CRED_MODE=SSM_CA_ROLES
+    
+    mapAppPipelineVars
 
     tlog DEBUG '============== show env ==================='
     tlog DEBUG "$( ( set -o posix ; set ) | grep TF_VAR_ )"
@@ -619,59 +637,6 @@ showTerraformOutput() {
   terraform output -no-color -json
 }
 export -f showTerraformOutput
-
-deployEcs() {
-  ACTION=$1
-  TERRAFORM_DIR=$2
-  APP_PREFIX=$3
-  APP_IMAGE=$4
-  APP_IMAGE_TAG=$5
-
-  export AWSENV=$(getAwsEnvBasedOnBranchName)  # parse AWSENV and DOMAIN from $DEPLOY's json
-  
-  if [[ -z $AWSENV ]]; then
-    tlog ERROR "No target AWSENV designated."
-    exit 1
-  fi
-
-  export TF_VAR_AWSENV=${AWSENV}
-  export TF_VAR_APPENV=$(getAppEnvBasedOnBranchName)
-
-  export TF_VAR_DOMAIN=$(getDomainBasedOnBranchName)  # parse ENV and DOMAIN from $DEPLOY's json
-
-  if [[ -z $APP_PREFIX ]]; then
-    export TF_VAR_APP_PREFIX=$(getAppNameBasedOnRepoName)
-  else
-    export TF_VAR_APP_PREFIX=${APP_PREFIX}
-  fi 
-
-  export TF_VAR_APP_POSTFIX=$(eval echo $(getPostfixBasedOnBranchName))
-
-  export TF_VAR_APP_UUID=${TF_VAR_APP_PREFIX}-${TF_VAR_APP_BRANCH_UUID}
-  export TF_VAR_APP_FULLNAME=${TF_VAR_APP_PREFIX}${TF_VAR_APP_POSTFIX}
-
-  export TF_VAR_FAMILY=$(getFamilyName)
-  export TF_VAR_SSM_PATH=$(getSsmPath)
-
-  if [[ -z $APP_IMAGE ]]; then
-    export TF_VAR_APP_IMAGE=${REPO_NAME}
-  else
-    export TF_VAR_APP_IMAGE=${APP_IMAGE}
-  fi
-
-  if [[ -z $APP_IMAGE_TAG ]]; then
-    export TF_VAR_APP_IMAGE_TAG=${REPO_COMMIT_HASH:0:7}
-  else
-    export TF_VAR_APP_IMAGE_TAG=${APP_IMAGE_TAG}
-  fi
-
-  tlog DEBUG "$(pwd)"
-  tlog DEBUG "$(ls -l)"
-
-  cd $TERRAFORM_DIR
-  doTerraform $ACTION ${APP_PREFIX}
-}
-export -f deployEcs
 
 addBuildStatus() {
   BUILD_NAME=$1
