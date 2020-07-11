@@ -254,14 +254,16 @@ buildDockerImage() {
     export IMAGE_TAG="${REPO_COMMIT_HASH:0:7}"
   fi
 
-  # This need to provide some way of passing build-arg
-  if [[ "${REPO_BRANCH}" = "master" ]]; then
-    tlog INFO "Building a production docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
-    docker build --build-arg environment=production -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-  else
-    tlog INFO "Building a development docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
-    docker build --build-arg environment=development -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-  fi
+  ## Add all TF_VAR_* as docker build args.
+  BUILD_ARGS=
+  OLD_IFS=$IFS
+  IFS==; while read KEY VALUE; do
+    BUILD_ARGS="${BUILD_ARGS} --build-arg ${KEY//TF_VAR_/}"
+  done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+  IFS=$OLD_IFS
+  
+  tlog INFO "Building a production docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
+  docker build ${BUILD_ARGS} -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 
   tlog INFO "$(docker images)"
 }
