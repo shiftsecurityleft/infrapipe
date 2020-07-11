@@ -45,8 +45,8 @@ mapAppPipelineVars() {
   export TF_VAR_APP_FULLNAME=${TF_VAR_APP_PREFIX}${TF_VAR_APP_POSTFIX}
   export TF_VAR_FAMILY=$(getFamilyName)
   export TF_VAR_SSM_PATH=$(getSsmPath)
-  export TF_VAR_APP_IMAGE=${REPO_NAME}
-  export TF_VAR_APP_IMAGE_TAG=${REPO_COMMIT_HASH:0:7}
+  export TF_VAR_APP_IMAGE=${TF_VAR_REPO_NAME}
+  export TF_VAR_APP_IMAGE_TAG=${TF_VAR_REPO_COMMIT_HASH:0:7}
 }
 export -f mapAppPipelineVars
 
@@ -199,12 +199,12 @@ getFamilies() {
 export -f getFamilies
 
 getFamilyName() {
-  getFamilies | yq -r '.families[] | select(.repos[].repo == env.REPO_NAME) | .family'
+  getFamilies | yq -r '.families[] | select(.repos[].repo == env.TF_VAR_REPO_NAME) | .family'
 }
 export -f getFamilyName
 
 getSsmPath() {
-  getFamilies | yq -r '.families[] | select(.repos[].repo == env.REPO_NAME) | .ssm_path'
+  getFamilies | yq -r '.families[] | select(.repos[].repo == env.TF_VAR_REPO_NAME) | .ssm_path'
 }
 export -f getSsmPath
 
@@ -227,14 +227,14 @@ loadManifest() {
 export -f loadManifest
 
 getAppNameBasedOnRepoName() {
-  getFamilies | yq -r '.families[].repos[] | select(.repo == env.REPO_NAME) | .app_prefix'
+  getFamilies | yq -r '.families[].repos[] | select(.repo == env.TF_VAR_REPO_NAME) | .app_prefix'
 }
 export -f getAppNameBasedOnRepoName
 
 getBranchManifest() {
   MANIFEST=$(loadManifest)
 
-  BRANCH_MANIFEST=$(echo "${MANIFEST}" | yq -r '.applications[].deployment[] | select(.branch == env.REPO_BRANCH)')
+  BRANCH_MANIFEST=$(echo "${MANIFEST}" | yq -r '.applications[].deployment[] | select(.branch == env.TF_VAR_REPO_BRANCH)')
   [[ -z $BRANCH_MANIFEST ]] && BRANCH_MANIFEST=$(echo "${MANIFEST}" | yq -r '.applications[].deployment.default')
 
   echo $BRANCH_MANIFEST
