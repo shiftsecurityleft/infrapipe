@@ -58,7 +58,6 @@ mapBitbucketPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    export TF_VAR_REPO_DIR=${BITBUCKET_CLONE_DIR}
     export TF_VAR_REPO_BRANCH=${BITBUCKET_BRANCH}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${BITBUCKET_TAG}
@@ -78,6 +77,25 @@ mapBitbucketPipelineVars() {
     #   SSM_VARS = read /devops/<ENV>/AWS_* vars from CI account, 
     #   SSM_CA_ROLES = read /devops/<ENV>/AWS_CROSSACCOUNT_ROLE from CI account
     export TF_VAR_AWS_CRED_MODE=SSM_CA_ROLES
+
+    ## NON TF_VAR_ vars
+      # Set Git credential for Terraform Module Source access without having to provide the credential in the URL. 
+      export REPO_DIR=${BITBUCKET_CLONE_DIR}
+      export REPO_USERNAME=${BITBUCKET_USERNAME}
+      export REPO_PASSWORD=${BITBUCKET_PASSWORD}
+
+      git config --global credential.helper "store --file $HOME/.my-credentials"
+      printf "host=bitbucket.org\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
+      echo "machine api.bitbucket.org login ${REPO_USERNAME} password ${REPO_PASSWORD}" > $HOME/.netrc
+
+      # The following vars's value are dynamic.  Therefore "\$"
+      #export BITBUCKET_API="https://\${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/\${BITBUCKET_WORKSPACE}"
+      export BITBUCKET_API="https://${REPO_USERNAME}:${REPO_PASSWORD}@api.bitbucket.org/2.0/repositories/\${REPO_WORKSPACE}"
+      export BUILD_STATUS_URL="${BITBUCKET_API}/\${REPO_NAME}/commit/\${REPO_COMMIT_HASH}/statuses/build"
+      export FAMILY_YML="${BITBUCKET_API}/\${MANIFEST_REPO}/src/\${MANIFEST_VER}/family.yml"
+      export MANIFEST_YML="${BITBUCKET_API}/\${MANIFEST_REPO}/src/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
+
+    ## Set APP specific vars from manifest file
     mapAppPipelineVars
 
     tlog DEBUG '============== show env ==================='
@@ -97,21 +115,6 @@ mapBitbucketPipelineVars() {
     #  TAGS="$TAGS\n${KEY//TF_VAR_/} = \"${VALUE}\""
     #done < <( ( set -o posix ; set ) | grep TF_VAR_ )
     #export TAGS
-
-    # Set Git credential for Terraform Module Source access without having to provide the credential in the URL. 
-    export REPO_USERNAME=${BITBUCKET_USERNAME}
-    export REPO_PASSWORD=${BITBUCKET_PASSWORD}
-
-    git config --global credential.helper "store --file $HOME/.my-credentials"
-    printf "host=bitbucket.org\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
-    echo "machine api.bitbucket.org login ${REPO_USERNAME} password ${REPO_PASSWORD}" > $HOME/.netrc
-
-    # The following vars's value are dynamic.  Therefore "\$"
-    #export BITBUCKET_API="https://\${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/\${BITBUCKET_WORKSPACE}"
-    export BITBUCKET_API="https://${REPO_USERNAME}:${REPO_PASSWORD}@api.bitbucket.org/2.0/repositories/\${REPO_WORKSPACE}"
-    export BUILD_STATUS_URL="${BITBUCKET_API}/${REPO_NAME}/commit/${REPO_COMMIT_HASH}/statuses/build"
-    export FAMILY_YML="${BITBUCKET_API}/${MANIFEST_REPO}/src/\${MANIFEST_VER}/family.yml"
-    export MANIFEST_YML="${BITBUCKET_API}/${MANIFEST_REPO}/src/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
   else
     tlog ERROR "This is NOT Bitbucket pipeline or missing Bitbucket pipeline variables for some reason if it is."
     exit 1
@@ -126,7 +129,6 @@ mapGitlabPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    export TF_VAR_REPO_DIR=${CI_PROJECT_DIR}
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${CI_COMMIT_TAG}
@@ -145,7 +147,25 @@ mapGitlabPipelineVars() {
     #   SSM_VARS = read /devops/<ENV>/AWS_* vars from CI account, 
     #   SSM_CA_ROLES = read /devops/<ENV>/AWS_CROSSACCOUNT_ROLE from CI account
     export TF_VAR_AWS_CRED_MODE=SSM_CA_ROLES
-    
+
+    ## NON TF_VAR_ vars
+      # Set Git credential for Terraform Module Source access without having to provide the credential in the URL. 
+      export REPO_DIR=${CI_PROJECT_DIR}
+      export REPO_USERNAME=gitlab-ci-token
+      export REPO_PASSWORD=${CI_JOB_TOKEN}
+
+      git config --global credential.helper "store --file $HOME/.my-credentials"
+      echo -e "host=gitlab.com\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
+      echo -e "machine gitlab.com\nlogin ${REPO_USERNAME}\npassword ${REPO_PASSWORD}" > $HOME/.netrc
+
+      # The following vars's value are dynamic.  Therefore "\$"
+      export GITLAB_API="https://gitlab.com/api/v4/projects/\${REPO_WORKSPACE}"
+      export GITLAB_URL="https://gitlab.com/\${REPO_WORKSPACE}"
+      export BUILD_STATUS_URL="${GITLAB_API}/\${REPO_NAME}/statuses/\${REPO_COMMIT_HASH}"
+      export FAMILY_YML="${GITLAB_URL}/\${MANIFEST_REPO}/raw/\${MANIFEST_VER}/family.yml"
+      export MANIFEST_YML="${GITLAB_URL}/\${MANIFEST_REPO}/raw/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
+
+    ## Set APP specific vars from manifest file
     mapAppPipelineVars
 
     tlog DEBUG '============== show env ==================='
@@ -159,19 +179,6 @@ mapGitlabPipelineVars() {
     done < <( ( set -o posix ; set ) | grep TF_VAR_ )
     IFS=$OLD_IFS
 
-    export REPO_USERNAME=gitlab-ci-token
-    export REPO_PASSWORD=${CI_JOB_TOKEN}
-
-    git config --global credential.helper "store --file $HOME/.my-credentials"
-    echo -e "host=gitlab.com\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
-    echo -e "machine gitlab.com\nlogin ${REPO_USERNAME}\npassword ${REPO_PASSWORD}" > $HOME/.netrc
-
-    # The following vars's value are dynamic.  Therefore "\$"
-    export GITLAB_API="https://gitlab.com/api/v4/projects/\${REPO_WORKSPACE}"
-    export GITLAB_URL="https://gitlab.com/\${REPO_WORKSPACE}"
-    export BUILD_STATUS_URL="${GITLAB_API}/${REPO_NAME}/statuses/${REPO_COMMIT_HASH}"
-    export FAMILY_YML="${GITLAB_URL}/${MANIFEST_REPO}/raw/\${MANIFEST_VER}/family.yml"
-    export MANIFEST_YML="${GITLAB_URL}/${MANIFEST_REPO}/raw/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
   else
     tlog ERROR "This is NOT Gitlab pipeline or missing Gitlab pipeline variables for some reason if it is."
     exit 1
