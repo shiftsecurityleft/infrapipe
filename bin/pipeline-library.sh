@@ -130,7 +130,7 @@ mapGitlabPipelineVars() {
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
-    export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
+    export TF_VAR_REPO_BRANCH_ENCODED=${CI_COMMIT_REF_SLUG}
     export TF_VAR_REPO_TAG=${CI_COMMIT_TAG}
     export TF_VAR_REPO_NAME=${CI_PROJECT_NAME}
     export TF_VAR_REPO_WORKSPACE=${CI_PROJECT_NAMESPACE}
