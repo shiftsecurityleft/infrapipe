@@ -12,46 +12,24 @@ variables:
 stages:
   - build
   - test
-  - push-tags
+  - push-image-tag
   
 docker-build:
   only:
     refs:
       - branches
-    changes:
-      - Dockerfile
-      - bin/*
-      - .gitlab-ci.yml
-  variables:
-    DOCKERFILE: "Dockerfile"
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker pull $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest --build-arg IMAGE_REF=$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA -f $DOCKERFILE .
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-    - docker tag  $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
-    - |
-      if [[ -z $SUB_IMAGE ]]; then
-        docker tag  $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-        docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-      fi
-
-push-tags:
-  only:
-    - tags
-  stage: push-tags
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-    - apk add curl
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
 
 test-image:
-  image: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
-  stage: test
+  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  stage: test 
   script:
+    #- source /root/bin/pipeline-library.sh
     - cat $HOME/.profile
     - |
       [ "$(command -v nvm)" ] && nvm --version
@@ -86,6 +64,24 @@ test-image:
     - |
       [ "$(command -v aws)" ] && aws --version
     - |
-      [ "$(command -v docker)" ] && docker --version
+      [ "$(command -v docker)" ] && docker --version && docker info
 
+push-tag:
+  only:
+    - tags
+  stage: push-image-tag
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
+push-branch:
+  only:
+    - branches
+  stage: push-image-tag
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG

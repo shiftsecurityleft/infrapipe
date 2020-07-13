@@ -35,6 +35,21 @@ trim() {
 }
 export -f trim
 
+mapAppPipelineVars() {
+  export TF_VAR_AWSENV=$(getAwsEnvBasedOnBranchName)
+  export TF_VAR_APPENV=$(getAppEnvBasedOnBranchName)
+  export TF_VAR_DOMAIN=$(getDomainBasedOnBranchName)  # parse ENV and DOMAIN from $DEPLOY's json
+  export TF_VAR_APP_PREFIX=$(getAppNameBasedOnRepoName)
+  export TF_VAR_APP_POSTFIX=$(eval echo $(getPostfixBasedOnBranchName))
+  export TF_VAR_APP_UUID=${TF_VAR_APP_PREFIX}-${TF_VAR_APP_BRANCH_UUID}
+  export TF_VAR_APP_FULLNAME=${TF_VAR_APP_PREFIX}${TF_VAR_APP_POSTFIX}
+  export TF_VAR_FAMILY=$(getFamilyName)
+  export TF_VAR_SSM_PATH=$(getSsmPath)
+  export TF_VAR_APP_IMAGE=${TF_VAR_REPO_NAME}
+  export TF_VAR_APP_IMAGE_TAG=${TF_VAR_REPO_COMMIT_HASH:0:7}
+}
+export -f mapAppPipelineVars
+
 mapBitbucketPipelineVars() {
   # Check to make sure this is run in BITBUCKET pipeline by checking BITBUCKET_REPO_SLUG var exists.
   if [[ ! -z "${BITBUCKET_REPO_SLUG}" ]]; then
@@ -43,7 +58,6 @@ mapBitbucketPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    export TF_VAR_CI_AWSENV=CI1
     export TF_VAR_REPO_BRANCH=${BITBUCKET_BRANCH}
     export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
     export TF_VAR_REPO_TAG=${BITBUCKET_TAG}
@@ -64,38 +78,43 @@ mapBitbucketPipelineVars() {
     #   SSM_CA_ROLES = read /devops/<ENV>/AWS_CROSSACCOUNT_ROLE from CI account
     export TF_VAR_AWS_CRED_MODE=SSM_CA_ROLES
 
+    ## NON TF_VAR_ vars
+      # Set Git credential for Terraform Module Source access without having to provide the credential in the URL. 
+      export REPO_DIR=${BITBUCKET_CLONE_DIR}
+      export REPO_USERNAME=${BITBUCKET_USERNAME}
+      export REPO_PASSWORD=${BITBUCKET_PASSWORD}
+
+      git config --global credential.helper "store --file $HOME/.my-credentials"
+      printf "host=bitbucket.org\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
+      echo "machine api.bitbucket.org login ${REPO_USERNAME} password ${REPO_PASSWORD}" > $HOME/.netrc
+
+      # The following vars's value are dynamic.  Therefore "\$"
+      #export BITBUCKET_API="https://\${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/\${BITBUCKET_WORKSPACE}"
+      export BITBUCKET_API="https://${REPO_USERNAME}:${REPO_PASSWORD}@api.bitbucket.org/2.0/repositories/\${REPO_WORKSPACE}"
+      export BUILD_STATUS_URL="${BITBUCKET_API}/\${REPO_NAME}/commit/\${REPO_COMMIT_HASH}/statuses/build"
+      export FAMILY_YML="${BITBUCKET_API}/\${MANIFEST_REPO}/src/\${MANIFEST_VER}/family.yml"
+      export MANIFEST_YML="${BITBUCKET_API}/\${MANIFEST_REPO}/src/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
+
+    ## Set APP specific vars from manifest file
+    mapAppPipelineVars
+
     tlog DEBUG '============== show env ==================='
-    tlog DEBUG "$( ( set -o posix ; set ) | grep TF_VAR_ )"
+    tlog DEBUG "$( ( set -o posix ; set ) | grep ^TF_VAR_ )"
     tlog DEBUG '-------------------------------------------'
 
     # Add ENV vars starting with TF_VAR_ without TF_VAR_
     OLD_IFS=$IFS
     IFS==; while read KEY VALUE; do
       export ${KEY//TF_VAR_/}=${VALUE}
-    done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+    done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
     IFS=$OLD_IFS
 
     # Add ENV vars starting with TF_VAR_ as TAGS without TF_VAR_
     #TAGS=""
     #IFS==; while read KEY VALUE; do
     #  TAGS="$TAGS\n${KEY//TF_VAR_/} = \"${VALUE}\""
-    #done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+    #done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
     #export TAGS
-
-    # Set Git credential for Terraform Module Source access without having to provide the credential in the URL. 
-    export REPO_USERNAME=${BITBUCKET_USERNAME}
-    export REPO_PASSWORD=${BITBUCKET_PASSWORD}
-
-    git config --global credential.helper "store --file $HOME/.my-credentials"
-    printf "host=bitbucket.org\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
-    echo "machine api.bitbucket.org login ${REPO_USERNAME} password ${REPO_PASSWORD}" > $HOME/.netrc
-
-    # The following vars's value are dynamic.  Therefore "\$"
-    #export BITBUCKET_API="https://\${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/\${BITBUCKET_WORKSPACE}"
-    export BITBUCKET_API="https://${REPO_USERNAME}:${REPO_PASSWORD}@api.bitbucket.org/2.0/repositories/\${REPO_WORKSPACE}"
-    export BUILD_STATUS_URL="${BITBUCKET_API}/${REPO_NAME}/commit/${REPO_COMMIT_HASH}/statuses/build"
-    export FAMILY_YML="${BITBUCKET_API}/${MANIFEST_REPO}/src/\${MANIFEST_VER}/family.yml"
-    export MANIFEST_YML="${BITBUCKET_API}/${MANIFEST_REPO}/src/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
   else
     tlog ERROR "This is NOT Bitbucket pipeline or missing Bitbucket pipeline variables for some reason if it is."
     exit 1
@@ -110,9 +129,8 @@ mapGitlabPipelineVars() {
     export TF_VAR_MANIFEST_REPO=app-manifest
     export TF_VAR_MANIFEST_VER=latest
     export TF_VAR_AWS_CRED_SSM_PATH=security/pipeline
-    export TF_VAR_CI_AWSENV=CI1
     export TF_VAR_REPO_BRANCH=${CI_COMMIT_REF_NAME}
-    export TF_VAR_REPO_BRANCH_ENCODED=${TF_VAR_REPO_BRANCH//\//-}
+    export TF_VAR_REPO_BRANCH_ENCODED=${CI_COMMIT_REF_SLUG}
     export TF_VAR_REPO_TAG=${CI_COMMIT_TAG}
     export TF_VAR_REPO_NAME=${CI_PROJECT_NAME}
     export TF_VAR_REPO_WORKSPACE=${CI_PROJECT_NAMESPACE}
@@ -130,30 +148,37 @@ mapGitlabPipelineVars() {
     #   SSM_CA_ROLES = read /devops/<ENV>/AWS_CROSSACCOUNT_ROLE from CI account
     export TF_VAR_AWS_CRED_MODE=SSM_CA_ROLES
 
+    ## NON TF_VAR_ vars
+      # Set Git credential for Terraform Module Source access without having to provide the credential in the URL. 
+      export REPO_DIR=${CI_PROJECT_DIR}
+      export REPO_USERNAME=gitlab-ci-token
+      export REPO_PASSWORD=${CI_JOB_TOKEN}
+
+      git config --global credential.helper "store --file $HOME/.my-credentials"
+      echo -e "host=gitlab.com\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
+      echo -e "machine gitlab.com\nlogin ${REPO_USERNAME}\npassword ${REPO_PASSWORD}" > $HOME/.netrc
+
+      # The following vars's value are dynamic.  Therefore "\$"
+      export GITLAB_API="https://gitlab.com/api/v4/projects/\${REPO_WORKSPACE}"
+      export GITLAB_URL="https://gitlab.com/\${REPO_WORKSPACE}"
+      export BUILD_STATUS_URL="${GITLAB_API}/\${REPO_NAME}/statuses/\${REPO_COMMIT_HASH}"
+      export FAMILY_YML="${GITLAB_URL}/\${MANIFEST_REPO}/raw/\${MANIFEST_VER}/family.yml"
+      export MANIFEST_YML="${GITLAB_URL}/\${MANIFEST_REPO}/raw/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
+
+    ## Set APP specific vars from manifest file
+    mapAppPipelineVars
+
     tlog DEBUG '============== show env ==================='
-    tlog DEBUG "$( ( set -o posix ; set ) | grep TF_VAR_ )"
+    tlog DEBUG "$( ( set -o posix ; set ) | grep ^TF_VAR_ )"
     tlog DEBUG '-------------------------------------------'
 
     # Add ENV vars starting with TF_VAR_ without TF_VAR_
     OLD_IFS=$IFS
     IFS==; while read KEY VALUE; do
       export ${KEY//TF_VAR_/}=${VALUE}
-    done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+    done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
     IFS=$OLD_IFS
 
-    export REPO_USERNAME=gitlab-ci-token
-    export REPO_PASSWORD=${CI_JOB_TOKEN}
-
-    git config --global credential.helper "store --file $HOME/.my-credentials"
-    echo -e "host=gitlab.com\nusername=${REPO_USERNAME}\npassword=${REPO_PASSWORD}\nprotocol=https\n" | git credential-store --file $HOME/.my-credentials store
-    echo -e "machine gitlab.com\nlogin ${REPO_USERNAME}\npassword ${REPO_PASSWORD}" > $HOME/.netrc
-
-    # The following vars's value are dynamic.  Therefore "\$"
-    export GITLAB_API="https://gitlab.com/api/v4/projects/\${REPO_WORKSPACE}"
-    export GITLAB_URL="https://gitlab.com/\${REPO_WORKSPACE}"
-    export BUILD_STATUS_URL="${GITLAB_API}/${REPO_NAME}/statuses/${REPO_COMMIT_HASH}"
-    export FAMILY_YML="${GITLAB_URL}/${MANIFEST_REPO}/raw/\${MANIFEST_VER}/family.yml"
-    export MANIFEST_YML="${GITLAB_URL}/${MANIFEST_REPO}/raw/\${MANIFEST_VER}/\${APP_FAMILY}/manifest.yml"
   else
     tlog ERROR "This is NOT Gitlab pipeline or missing Gitlab pipeline variables for some reason if it is."
     exit 1
@@ -163,19 +188,23 @@ export -f mapGitlabPipelineVars
 
 getFamilies() {
   if [[ -z ${FAMILY_YML_CACHE} ]]; then
-    export FAMILY_YML_CACHE=$(eval "curl -sSL ${FAMILY_YML}")
+    if [[ -f ${REPO_DIR}/manifest/family.yml ]]; then
+      export FAMILY_YML_CACHE=$(cat ${REPO_DIR}/manifest/family.yml)
+    else
+      export FAMILY_YML_CACHE=$(eval "curl -sSL ${FAMILY_YML}")
+    fi
   fi
   echo "${FAMILY_YML_CACHE}"
 }
 export -f getFamilies
 
 getFamilyName() {
-  getFamilies | yq -r '.families[] | select(.repos[].repo == env.REPO_NAME) | .family'
+  getFamilies | yq -r '.families[] | select(.repos[].repo == env.TF_VAR_REPO_NAME) | .family'
 }
 export -f getFamilyName
 
 getSsmPath() {
-  getFamilies | yq -r '.families[] | select(.repos[].repo == env.REPO_NAME) | .ssm_path'
+  getFamilies | yq -r '.families[] | select(.repos[].repo == env.TF_VAR_REPO_NAME) | .ssm_path'
 }
 export -f getSsmPath
 
@@ -186,7 +215,11 @@ loadManifest() {
 
   if [[ ! -z ${APP_FAMILY} ]]; then
     if [[ -z ${MANIFEST_YML_CACHE} ]]; then
-      export MANIFEST_YML_CACHE=$(eval "curl -sSL ${MANIFEST_YML}")
+      if [[ -f ${REPO_DIR}/manifest/${APP_FAMILY}/manifest.yml ]]; then
+        export MANIFEST_YML_CACHE=$(cat ${REPO_DIR}/manifest/${APP_FAMILY}/manifest.yml)
+      else
+        export MANIFEST_YML_CACHE=$(eval "curl -sSL ${MANIFEST_YML}")
+      fi
     fi
     echo "${MANIFEST_YML_CACHE}"
   fi
@@ -194,14 +227,14 @@ loadManifest() {
 export -f loadManifest
 
 getAppNameBasedOnRepoName() {
-  getFamilies | yq -r '.families[].repos[] | select(.repo == env.REPO_NAME) | .app_prefix'
+  getFamilies | yq -r '.families[].repos[] | select(.repo == env.TF_VAR_REPO_NAME) | .app_prefix'
 }
 export -f getAppNameBasedOnRepoName
 
 getBranchManifest() {
   MANIFEST=$(loadManifest)
 
-  BRANCH_MANIFEST=$(echo "${MANIFEST}" | yq -r '.applications[].deployment[] | select(.branch == env.REPO_BRANCH)')
+  BRANCH_MANIFEST=$(echo "${MANIFEST}" | yq -r '.applications[].deployment[] | select(.branch == env.TF_VAR_REPO_BRANCH)')
   [[ -z $BRANCH_MANIFEST ]] && BRANCH_MANIFEST=$(echo "${MANIFEST}" | yq -r '.applications[].deployment.default')
 
   echo $BRANCH_MANIFEST
@@ -246,14 +279,16 @@ buildDockerImage() {
     export IMAGE_TAG="${REPO_COMMIT_HASH:0:7}"
   fi
 
-  # This need to provide some way of passing build-arg
-  if [[ "${REPO_BRANCH}" = "master" ]]; then
-    tlog INFO "Building a production docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
-    docker build --build-arg environment=production -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-  else
-    tlog INFO "Building a development docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
-    docker build --build-arg environment=development -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-  fi
+  ## Add all TF_VAR_* as docker build args.
+  BUILD_ARGS=
+  OLD_IFS=$IFS
+  IFS==; while read KEY VALUE; do
+    BUILD_ARGS="${BUILD_ARGS} --build-arg ${KEY//TF_VAR_/}"
+  done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
+  IFS=$OLD_IFS
+  
+  tlog INFO "Building a production docker image of ${IMAGE_NAME}:${IMAGE_TAG}..."
+  docker build ${BUILD_ARGS} -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 
   tlog INFO "$(docker images)"
 }
@@ -271,7 +306,11 @@ uploadToEcr() {
     export IMAGE_TAG="${REPO_COMMIT_HASH:0:7}"
   fi
 
-  eval "$(aws ecr get-login --no-include-email)"
+  ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
+  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+    | docker login \
+      --username AWS \
+      --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com     
 
   tlog INFO "Creating ECR repo: ${IMAGE_NAME} if not exists..."
   aws ecr describe-repositories --repository-names ${IMAGE_NAME} || aws ecr create-repository --repository-name ${IMAGE_NAME}
@@ -383,6 +422,14 @@ getAwsCred() {
   AWSENV=$1
   DO_NOT_ASSUME_ROLE=$2
 
+  if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
+    export TF_VAR_CI_AWSENV=${AWSENV}
+    export CI_AWSENV=${AWSENV}
+  else
+    export TF_VAR_CI_AWSENV=
+    export CI_AWSENV=
+  fi
+
   if [[ "${AWS_CRED_MODE}" = "SSM_CA_ROLES" ]]; then 
     getAwsCredFromSsm ${AWSENV} ${DO_NOT_ASSUME_ROLE}
   else
@@ -477,7 +524,7 @@ createCommonTagsFile() {
     if [[ ! -z ${VALUE} ]]; then 
       echo "${KEY//TF_VAR_/} = \"${VALUE//\'/}\"" >> ${COMMON_TAGS}
     fi
-  done < <( ( set -o posix ; set ) | grep TF_VAR_ )
+  done < <( ( set -o posix ; set ) | grep ^TF_VAR_ )
   IFS=$OLD_IFS
   
   echo "  }" >> ${COMMON_TAGS}
@@ -539,11 +586,6 @@ doTerraform() {
     WORKSPACE_NAME=${REPO_NAME}-${REPO_BRANCH_ENCODED}-${APP_PREFIX}
   fi
 
-  if [[ ( -z ${SSL_MULTI_ACCOUNTS} ) || ( "${SSL_MULTI_ACCOUNTS}" = "false" ) ]]; then
-    export TF_VAR_CI_AWSENV=${AWSENV}
-    export CI_AWSENV=${AWSENV}
-  fi
-
   source <( getAwsCred ${AWSENV} )
 
   #### Create provider-aws.tf if any other provider* does not exists.
@@ -603,59 +645,6 @@ showTerraformOutput() {
 }
 export -f showTerraformOutput
 
-deployEcs() {
-  ACTION=$1
-  TERRAFORM_DIR=$2
-  APP_PREFIX=$3
-  APP_IMAGE=$4
-  APP_IMAGE_TAG=$5
-
-  export AWSENV=$(getAwsEnvBasedOnBranchName)  # parse AWSENV and DOMAIN from $DEPLOY's json
-  
-  if [[ -z $AWSENV ]]; then
-    tlog ERROR "No target AWSENV designated."
-    exit 1
-  fi
-
-  export TF_VAR_AWSENV=${AWSENV}
-  export TF_VAR_APPENV=$(getAppEnvBasedOnBranchName)
-
-  export TF_VAR_DOMAIN=$(getDomainBasedOnBranchName)  # parse ENV and DOMAIN from $DEPLOY's json
-
-  if [[ -z $APP_PREFIX ]]; then
-    export TF_VAR_APP_PREFIX=$(getAppNameBasedOnRepoName)
-  else
-    export TF_VAR_APP_PREFIX=${APP_PREFIX}
-  fi 
-
-  export TF_VAR_APP_POSTFIX=$(eval echo $(getPostfixBasedOnBranchName))
-
-  export TF_VAR_APP_UUID=${TF_VAR_APP_PREFIX}-${TF_VAR_APP_BRANCH_UUID}
-  export TF_VAR_APP_FULLNAME=${TF_VAR_APP_PREFIX}${TF_VAR_APP_POSTFIX}
-
-  export TF_VAR_FAMILY=$(getFamilyName)
-  export TF_VAR_SSM_PATH=$(getSsmPath)
-
-  if [[ -z $APP_IMAGE ]]; then
-    export TF_VAR_APP_IMAGE=${REPO_NAME}
-  else
-    export TF_VAR_APP_IMAGE=${APP_IMAGE}
-  fi
-
-  if [[ -z $APP_IMAGE_TAG ]]; then
-    export TF_VAR_APP_IMAGE_TAG=${REPO_COMMIT_HASH:0:7}
-  else
-    export TF_VAR_APP_IMAGE_TAG=${APP_IMAGE_TAG}
-  fi
-
-  tlog DEBUG "$(pwd)"
-  tlog DEBUG "$(ls -l)"
-
-  cd $TERRAFORM_DIR
-  doTerraform $ACTION ${APP_PREFIX}
-}
-export -f deployEcs
-
 addBuildStatus() {
   BUILD_NAME=$1
 
@@ -693,12 +682,18 @@ copyImage() {
 
   source <(getAwsCred ${FROM_AWSENV})
   FROM_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
-  eval "$(aws ecr get-login --no-include-email)"
+  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+    | docker login \
+      --username AWS \
+      --password-stdin ${FROM_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com     
   docker pull ${FROM_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${FROM_IMAGE}
 
   source <(getAwsCred ${TO_AWSENV})
   TO_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
-  eval "$(aws ecr get-login --no-include-email)"
+  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+    | docker login \
+      --username AWS \
+      --password-stdin ${TO_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com     
 
   aws ecr describe-repositories --repository-names ${TO_IMAGE%%:*} || aws ecr create-repository --repository-name ${TO_IMAGE%%:*}
   docker tag ${FROM_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${FROM_IMAGE} ${TO_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${TO_IMAGE}

@@ -38,16 +38,10 @@ RUN mkdir -p /opt/gitlab/cicd/agent/build \
     && sed -i '/[ -z \"PS1\" ] && return/a\\ncase $- in\n*i*) ;;\n*) return;;\nesac' /root/.bashrc \
     && useradd --create-home --shell /bin/bash --uid 1000 pipelines
 
-WORKDIR /opt/gitlab/cicd/agent/build
-
-ENTRYPOINT /bin/bash
-
-
 ###############################################
 ###############################################
 ## Build tools stage
 FROM baseimage as toolsimage
-LABEL author="infrapipe@shiftsecurityleft.io"
 
 #ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/New_York
@@ -199,21 +193,18 @@ RUN set -eux; \
     rm docker.tgz; 	\
     dockerd --version; \
     docker --version
+
+COPY modprobe.sh /usr/local/bin/modprobe
+COPY docker-entrypoint.sh /usr/local/bin/
+
 ENV DOCKER_TLS_CERTDIR=/certs
+
 RUN mkdir /certs /certs/client && chmod 1777 /certs /certs/client
 
-
-WORKDIR /opt/gitlab/cicd/agent/build
-
-ENTRYPOINT /bin/bash
-
-
-########################################################################
 ########################################################################
 ########################################################################
 # build  Pipeline image
 FROM toolsimage as pipeimage
-LABEL author="infrapipe@shiftsecurityleft.io"
 
 RUN mkdir -p /root/bin
 ENV PATH=/root/bin:$PATH
@@ -233,4 +224,6 @@ SHELL ["/bin/bash", "-c", "-l"]
 
 WORKDIR /opt/gitlab/cicd/agent/build
 
-ENTRYPOINT /bin/bash
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD ["/bin/bash"]
